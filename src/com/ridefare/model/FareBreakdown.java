@@ -7,20 +7,20 @@ package com.ridefare.model;
  * 
  * ROLE AND PURPOSE:
  * Serves as the comprehensive, immutable financial receipt and audit ledger
- * produced by the PricingEngine.
+ * produced by the PricingEngine in Indian Rupees (₹).
  * 
  * TRANSPARENT PRICING PHILOSOPHY:
  * Commercial ride-hailing algorithms are often criticized as opaque "black boxes."
  * FareBreakdown provides full transparency by decomposing the total payable fare
  * into every individual contributing component:
- * 1. Base Flag-Fall Fare ($)
- * 2. Distance Traveled Charge ($)
- * 3. Journey Duration Time Charge ($)
- * 4. Normal Unsurged Subtotal ($)
+ * 1. Base Flag-Fall Fare (₹)
+ * 2. Distance Traveled Charge (₹)
+ * 3. Journey Duration Time Charge (₹)
+ * 4. Normal Unsurged Subtotal (₹)
  * 5. Effective Demand Ratio (R_eff)
  * 6. Piecewise Surge Multiplier (1.00x - 3.50x)
- * 7. Dynamic Surge Addition Delta ($)
- * 8. Final Payable Fare ($)
+ * 7. Dynamic Surge Addition Delta (₹)
+ * 8. Final Payable Fare (₹)
  * 9. Market Status Category and Transparent Diagnostic Notes
  * 
  * This object is consumed by both the Swing GraphicalUI and the Terminal
@@ -35,16 +35,16 @@ public class FareBreakdown {
     /** Market conditions snapshot at calculation time */
     private final MarketConditions conditions;
 
-    /** Fixed vehicle category flag-fall fee ($) */
+    /** Fixed vehicle category flag-fall fee (₹) */
     private final double baseFare;
 
-    /** Distance tariff charge: distanceKm * perKmRate ($) */
+    /** Distance tariff charge: distanceKm * perKmRate (₹) */
     private final double distanceCharge;
 
-    /** Duration tariff charge: durationMinutes * perMinuteRate ($) */
+    /** Duration tariff charge: durationMinutes * perMinuteRate (₹) */
     private final double timeCharge;
 
-    /** Subtotal before dynamic surge adjustment: base + distance + time ($) */
+    /** Subtotal before dynamic surge adjustment: base + distance + time (₹) */
     private final double normalFare;
 
     /** Synthesized demand ratio compounding supply, peak hour, and weather */
@@ -53,10 +53,10 @@ public class FareBreakdown {
     /** Final dynamic multiplier applied to the normal fare (1.00x to 3.50x) */
     private final double surgeMultiplier;
 
-    /** Total final payable price charged to the passenger ($) */
+    /** Total final payable price charged to the passenger in Indian Rupees (₹) */
     private final double finalFare;
 
-    /** Monetary surcharge added specifically due to surge: max(0, finalFare - normalFare) */
+    /** Monetary surcharge added specifically due to surge: max(0, finalFare - normalFare) (₹) */
     private final double surgeDelta;
 
     /** Human-readable market classification (e.g. "Mild Surge", "Maximum Cap Enforced") */
@@ -70,13 +70,13 @@ public class FareBreakdown {
      *
      * @param request              Original ride booking details
      * @param conditions           Snapshot of market conditions
-     * @param baseFare             Fixed base tariff component ($)
-     * @param distanceCharge       Variable distance tariff component ($)
-     * @param timeCharge           Variable duration tariff component ($)
-     * @param normalFare           Standard unsurged baseline fare ($)
+     * @param baseFare             Fixed base tariff component (₹)
+     * @param distanceCharge       Variable distance tariff component (₹)
+     * @param timeCharge           Variable duration tariff component (₹)
+     * @param normalFare           Standard unsurged baseline fare (₹)
      * @param effectiveDemandRatio Calculated effective demand-supply ratio
      * @param surgeMultiplier      Piecewise surge multiplier applied (1.00x - 3.50x)
-     * @param finalFare            Total rounded payable fare ($)
+     * @param finalFare            Total rounded payable fare in Indian Rupees (₹)
      * @param demandLevel          Categorical status string
      * @param notes                Transparent narrative explanation
      */
@@ -117,7 +117,7 @@ public class FareBreakdown {
 
     /**
      * Retrieves the base flag-fall fare.
-     * @return Base fare in dollars
+     * @return Base fare in Indian Rupees (₹)
      */
     public double getBaseFare() {
         return baseFare;
@@ -125,7 +125,7 @@ public class FareBreakdown {
 
     /**
      * Retrieves the distance-based tariff component.
-     * @return Distance charge in dollars
+     * @return Distance charge in Indian Rupees (₹)
      */
     public double getDistanceCharge() {
         return distanceCharge;
@@ -133,7 +133,7 @@ public class FareBreakdown {
 
     /**
      * Retrieves the time-based tariff component.
-     * @return Time charge in dollars
+     * @return Time charge in Indian Rupees (₹)
      */
     public double getTimeCharge() {
         return timeCharge;
@@ -141,7 +141,7 @@ public class FareBreakdown {
 
     /**
      * Retrieves the standard baseline normal fare (un-surged).
-     * @return Normal fare in dollars
+     * @return Normal fare in Indian Rupees (₹)
      */
     public double getNormalFare() {
         return normalFare;
@@ -165,7 +165,7 @@ public class FareBreakdown {
 
     /**
      * Retrieves the final rounded payable fare.
-     * @return Total final fare in dollars
+     * @return Total final fare in Indian Rupees (₹)
      */
     public double getFinalFare() {
         return finalFare;
@@ -173,7 +173,7 @@ public class FareBreakdown {
 
     /**
      * Retrieves the monetary difference between the surged fare and normal fare.
-     * @return Surge delta in dollars (0.0 if un-surged)
+     * @return Surge delta in Indian Rupees (₹) (0.0 if un-surged)
      */
     public double getSurgeDelta() {
         return surgeDelta;

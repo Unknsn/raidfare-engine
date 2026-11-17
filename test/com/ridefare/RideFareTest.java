@@ -16,7 +16,8 @@ import com.ridefare.model.WeatherCondition;
  * ROLE AND PURPOSE:
  * Provides a comprehensive, automated test harness that systematically verifies
  * the correctness, robustness, and mathematical integrity of the RideFare
- * Dynamic Surge Pricing Engine across all operational conditions.
+ * Dynamic Surge Pricing Engine across all operational conditions, calibrated
+ * in Indian Rupees (INR / ₹).
  * 
  * ZERO-DEPENDENCY DESIGN PHILOSOPHY:
  * Built strictly on the standard Java SE runtime without external testing
@@ -26,7 +27,7 @@ import com.ridefare.model.WeatherCondition;
  * 
  * TEST COVERAGE CATEGORIES (41 TOTAL TESTS):
  * ----------------------------------------------------------------------------
- * 1. Baseline Fare Calculations   : Validates base tariff formulas across tiers.
+ * 1. Baseline Fare Calculations   : Validates base tariff formulas in ₹ across tiers.
  * 2. Supply & Demand Dynamics     : Evaluates piecewise curve segments (1.00x - 3.50x).
  * 3. Environmental & Peak Factors : Verifies peak hour (1.20x) & weather multipliers.
  * 4. Edge Cases & Boundary Limits : Zero-driver defense, min/max distances, boundary transitions.
@@ -56,12 +57,12 @@ public class RideFareTest {
      */
     public static void main(String[] args) {
         System.out.println("================================================================================");
-        System.out.println("              RIDEFARE AUTOMATED TEST SUITE EXECUTION (CP-044)                  ");
+        System.out.println("              RIDEFARE AUTOMATED TEST SUITE EXECUTION (CP-044 - INR / ₹)        ");
         System.out.println("================================================================================");
 
         long startTime = System.currentTimeMillis();
 
-        // Suite 1: Normal Baseline Fare Calculations & Vehicle Tariffs
+        // Suite 1: Normal Baseline Fare Calculations & Vehicle Tariffs (INR / ₹)
         testNormalFareCalculation();
         testVehicleTiersTariffRates();
 
@@ -153,28 +154,28 @@ public class RideFareTest {
     }
 
     // ========================================================================
-    // SUITE 1: BASELINE UNSURGED FARE CALCULATIONS
+    // SUITE 1: BASELINE UNSURGED FARE CALCULATIONS (INDIAN RUPEES - ₹)
     // ========================================================================
 
     /**
      * Validates baseline un-surged fare calculations for a Standard Sedan:
-     * Base: $3.50 + Distance (10 km * $1.25 = $12.50) + Time (20 min * $0.25 = $5.00) = $21.00.
+     * Base: ₹60.00 + Distance (10 km * ₹15.00 = ₹150.00) + Time (20 min * ₹2.00 = ₹40.00) = ₹250.00.
      */
     private static void testNormalFareCalculation() {
-        System.out.println("\n--- Category 1: Baseline Fare Calculations ---");
+        System.out.println("\n--- Category 1: Baseline Fare Calculations (INR / ₹) ---");
         RideRequest req = new RideRequest("Point A", "Point B", 10.0, 20.0, VehicleType.STANDARD);
         MarketConditions cond = new MarketConditions(10, 20, false, WeatherCondition.CLEAR);
 
         FareBreakdown b = engine.calculateFare(req, cond);
-        assertEqualDoubles("Standard Fare Un-surged", 21.00, b.getNormalFare(), 0.01, "Base $3.50 + Dist $12.50 + Time $5.00");
+        assertEqualDoubles("Standard Fare Un-surged", 250.00, b.getNormalFare(), 0.01, "Base ₹60.00 + Dist ₹150.00 + Time ₹40.00");
         assertEqualDoubles("Standard Multiplier 1.00x", 1.00, b.getSurgeMultiplier(), 0.001, "Normal demand ratio 0.50");
-        assertEqualDoubles("Final Fare Equals Normal Fare", 21.00, b.getFinalFare(), 0.01, "No surge delta added");
+        assertEqualDoubles("Final Fare Equals Normal Fare", 250.00, b.getFinalFare(), 0.01, "No surge delta added");
     }
 
     /**
-     * Validates tariff schedules for Economy and Premium vehicle tiers:
-     * Economy: Base $2.50 + (10 * $0.90) + (20 * $0.15) = $14.50
-     * Premium: Base $5.50 + (10 * $2.10) + (20 * $0.40) = $34.50
+     * Validates tariff schedules for Economy and Premium vehicle tiers in ₹:
+     * Economy: Base ₹50.00 + (10 * ₹12.00 = ₹120.00) + (20 * ₹1.50 = ₹30.00) = ₹200.00
+     * Premium: Base ₹100.00 + (10 * ₹22.00 = ₹220.00) + (20 * ₹3.00 = ₹60.00) = ₹380.00
      */
     private static void testVehicleTiersTariffRates() {
         RideRequest reqEco = new RideRequest("Origin", "Dest", 10.0, 20.0, VehicleType.ECONOMY);
@@ -182,10 +183,10 @@ public class RideFareTest {
         MarketConditions cond = new MarketConditions(10, 10, false, WeatherCondition.CLEAR);
 
         FareBreakdown bEco = engine.calculateFare(reqEco, cond);
-        assertEqualDoubles("Economy Tier Tariff", 14.50, bEco.getNormalFare(), 0.01, "Economy 10km, 20min");
+        assertEqualDoubles("Economy Tier Tariff", 200.00, bEco.getNormalFare(), 0.01, "Economy 10km, 20min (₹200.00)");
 
         FareBreakdown bPrem = engine.calculateFare(reqPrem, cond);
-        assertEqualDoubles("Premium Tier Tariff", 34.50, bPrem.getNormalFare(), 0.01, "Premium 10km, 20min");
+        assertEqualDoubles("Premium Tier Tariff", 380.00, bPrem.getNormalFare(), 0.01, "Premium 10km, 20min (₹380.00)");
     }
 
     // ========================================================================

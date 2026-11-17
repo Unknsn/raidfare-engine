@@ -21,7 +21,7 @@ import java.awt.event.ActionEvent;
  * 
  * ROLE AND PURPOSE:
  * Provides a clean, modern, and practical Java Swing desktop interface for
- * the RideFare Dynamic Surge Pricing Engine.
+ * the RideFare Dynamic Surge Pricing Engine, formatted in Indian Rupees (INR / ₹).
  * 
  * DESIGN PRINCIPLES:
  * 1. Minimal & Functional Layout: Clean two-column design separating input controls
@@ -36,7 +36,7 @@ import java.awt.event.ActionEvent;
  * 5. Instant Visual Feedback: Surge multipliers and final fares are color-coded
  *    (green for normal, orange-red for active surge) to immediately communicate market status.
  * 6. Multi-Tier Comparative Card: Automatically displays side-by-side fares for
- *    Economy, Standard, and Premium tiers for every calculation.
+ *    Economy, Standard, and Premium tiers for every calculation in Indian Rupees (₹).
  * ============================================================================
  */
 public class GraphicalUI extends JFrame {
@@ -60,7 +60,7 @@ public class GraphicalUI extends JFrame {
     private JComboBox<String> cmbPresets;
 
     // ------------------------------------------------------------------------
-    // CALCULATION & DIAGNOSTIC OUTPUT COMPONENTS
+    // CALCULATION & DIAGNOSTIC OUTPUT COMPONENTS (INR / ₹)
     // ------------------------------------------------------------------------
     private JLabel lblBaseFare;
     private JLabel lblDistanceCharge;
@@ -82,7 +82,7 @@ public class GraphicalUI extends JFrame {
      * Constructs the main application window and initializes all UI components.
      */
     public GraphicalUI() {
-        super("RideFare - Dynamic Surge Pricing Engine (CP-044)");
+        super("RideFare - Dynamic Surge Pricing Engine (CP-044 - INR / ₹)");
         this.engine = new PricingEngine();
 
         // Apply native operating system look and feel
@@ -153,7 +153,7 @@ public class GraphicalUI extends JFrame {
         title.setFont(new Font("Segoe UI", Font.BOLD, 18));
         title.setForeground(Color.WHITE);
 
-        JLabel subtitle = new JLabel("Travel, Transport and Logistics (Project CP-044)");
+        JLabel subtitle = new JLabel("Travel, Transport and Logistics (Project CP-044 - INR / ₹)");
         subtitle.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         subtitle.setForeground(new Color(203, 213, 225));
 
@@ -276,14 +276,14 @@ public class GraphicalUI extends JFrame {
 
     /**
      * Constructs the right-hand panel displaying fare breakdowns, diagnostics,
-     * and the multi-tier vehicle comparison card.
+     * and the multi-tier vehicle comparison card in Indian Rupees (₹).
      */
     private JPanel createOutputPanel() {
         JPanel panel = new JPanel(new BorderLayout(8, 8));
         panel.setOpaque(false);
         panel.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(new Color(203, 213, 225)),
-                "3. Fare Breakdown & Diagnostics",
+                "3. Fare Breakdown & Diagnostics (INR / ₹)",
                 TitledBorder.LEFT, TitledBorder.TOP,
                 new Font("Segoe UI", Font.BOLD, 12), new Color(51, 65, 85)));
 
@@ -292,14 +292,14 @@ public class GraphicalUI extends JFrame {
         breakdownGrid.setOpaque(false);
         breakdownGrid.setBorder(new EmptyBorder(6, 10, 6, 10));
 
-        lblBaseFare = new JLabel("$ 0.00");
-        lblDistanceCharge = new JLabel("$ 0.00");
-        lblTimeCharge = new JLabel("$ 0.00");
-        lblNormalFare = new JLabel("$ 0.00");
+        lblBaseFare = new JLabel("₹ 0.00");
+        lblDistanceCharge = new JLabel("₹ 0.00");
+        lblTimeCharge = new JLabel("₹ 0.00");
+        lblNormalFare = new JLabel("₹ 0.00");
         lblEffectiveRatio = new JLabel("0.00");
         lblSurgeMultiplier = new JLabel("1.00x");
-        lblSurgeDelta = new JLabel("$ 0.00");
-        lblFinalFare = new JLabel("$ 0.00");
+        lblSurgeDelta = new JLabel("₹ 0.00");
+        lblFinalFare = new JLabel("₹ 0.00");
 
         Font valueFont = new Font("Segoe UI", Font.BOLD, 12);
         lblBaseFare.setFont(valueFont);
@@ -432,7 +432,7 @@ public class GraphicalUI extends JFrame {
             // Execute engine calculations
             FareBreakdown breakdown = engine.calculateFare(request, conditions);
 
-            // Update user interface displays
+            // Update user interface displays in Indian Rupees
             updateOutputDisplay(breakdown);
             updateComparisonDisplay(request, conditions);
 
@@ -455,13 +455,13 @@ public class GraphicalUI extends JFrame {
     }
 
     /**
-     * Updates all labels in the Fare Breakdown and Status panels with calculated values.
+     * Updates all labels in the Fare Breakdown and Status panels with calculated values in ₹.
      */
     private void updateOutputDisplay(FareBreakdown b) {
-        lblBaseFare.setText(String.format("$ %.2f", b.getBaseFare()));
-        lblDistanceCharge.setText(String.format("$ %.2f (%.1f km)", b.getDistanceCharge(), b.getRequest().getDistanceKm()));
-        lblTimeCharge.setText(String.format("$ %.2f (%.1f min)", b.getTimeCharge(), b.getRequest().getDurationMinutes()));
-        lblNormalFare.setText(String.format("$ %.2f", b.getNormalFare()));
+        lblBaseFare.setText(String.format("₹ %.2f", b.getBaseFare()));
+        lblDistanceCharge.setText(String.format("₹ %.2f (%.1f km)", b.getDistanceCharge(), b.getRequest().getDistanceKm()));
+        lblTimeCharge.setText(String.format("₹ %.2f (%.1f min)", b.getTimeCharge(), b.getRequest().getDurationMinutes()));
+        lblNormalFare.setText(String.format("₹ %.2f", b.getNormalFare()));
 
         // Display effective ratio or infinite flag
         if (Double.isInfinite(b.getEffectiveDemandRatio())) {
@@ -478,36 +478,36 @@ public class GraphicalUI extends JFrame {
             lblSurgeMultiplier.setForeground(new Color(22, 101, 52)); // Green
         }
 
-        lblSurgeDelta.setText(String.format("+$ %.2f", b.getSurgeDelta()));
-        lblFinalFare.setText(String.format("$ %.2f", b.getFinalFare()));
+        lblSurgeDelta.setText(String.format("+₹ %.2f", b.getSurgeDelta()));
+        lblFinalFare.setText(String.format("₹ %.2f", b.getFinalFare()));
 
         lblDemandLevel.setText("Market Status: " + b.getDemandLevel());
         txtNotes.setText(b.getNotes());
     }
 
     /**
-     * Computes and displays side-by-side fares for Economy, Standard, and Premium tiers.
+     * Computes and displays side-by-side fares for Economy, Standard, and Premium tiers in ₹.
      */
     private void updateComparisonDisplay(RideRequest baseReq, MarketConditions cond) {
         // Economy Tier calculation
         RideRequest reqEco = new RideRequest(baseReq.getPickupLocation(), baseReq.getDestination(),
                 baseReq.getDistanceKm(), baseReq.getDurationMinutes(), VehicleType.ECONOMY);
         FareBreakdown bEco = engine.calculateFare(reqEco, cond);
-        lblEconomyCompare.setText(String.format("• Economy: Normal: $%.2f | Surged: $%.2f (Delta: +$%.2f)",
+        lblEconomyCompare.setText(String.format("• Economy: Normal: ₹%.2f | Surged: ₹%.2f (Delta: +₹%.2f)",
                 bEco.getNormalFare(), bEco.getFinalFare(), bEco.getSurgeDelta()));
 
         // Standard Tier calculation
         RideRequest reqStd = new RideRequest(baseReq.getPickupLocation(), baseReq.getDestination(),
                 baseReq.getDistanceKm(), baseReq.getDurationMinutes(), VehicleType.STANDARD);
         FareBreakdown bStd = engine.calculateFare(reqStd, cond);
-        lblStandardCompare.setText(String.format("• Standard: Normal: $%.2f | Surged: $%.2f (Delta: +$%.2f)",
+        lblStandardCompare.setText(String.format("• Standard: Normal: ₹%.2f | Surged: ₹%.2f (Delta: +₹%.2f)",
                 bStd.getNormalFare(), bStd.getFinalFare(), bStd.getSurgeDelta()));
 
         // Premium Tier calculation
         RideRequest reqPrem = new RideRequest(baseReq.getPickupLocation(), baseReq.getDestination(),
                 baseReq.getDistanceKm(), baseReq.getDurationMinutes(), VehicleType.PREMIUM);
         FareBreakdown bPrem = engine.calculateFare(reqPrem, cond);
-        lblPremiumCompare.setText(String.format("• Premium: Normal: $%.2f | Surged: $%.2f (Delta: +$%.2f)",
+        lblPremiumCompare.setText(String.format("• Premium: Normal: ₹%.2f | Surged: ₹%.2f (Delta: +₹%.2f)",
                 bPrem.getNormalFare(), bPrem.getFinalFare(), bPrem.getSurgeDelta()));
     }
 

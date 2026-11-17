@@ -1,7 +1,8 @@
 # RideFare: Dynamic Surge Pricing Engine for Ride-Hailing
 
 **Project ID:** CP-044  
-**Domain:** Travel, Transport and Logistics  
+**Domain:** Travel, Transport and Logistics (Intelligent Systems)  
+**Currency Standard:** Indian Rupees (INR / ₹)  
 **Difficulty Level:** Intermediate  
 **Language:** Java (JDK 17+) — Pure Standard Edition (Zero External Dependencies)  
 **Deliverables:** Executable JAR (`RideFare.jar`), Clean Source Code, Test Suite, Technical Documentation, and Comprehensive Academic PDF Report (`docs/RideFare_Technical_Report.pdf`)
@@ -10,12 +11,12 @@
 
 ## 1. Project Overview
 
-**RideFare** is an academic software development project that implements an intelligent, deterministic, and transparent **Dynamic Surge Pricing Engine** for ride-hailing applications. In modern transportation platforms, balancing passenger demand with driver supply is critical to maintaining operational liquidity, preventing driver shortages, and regulating localized congestion.
+**RideFare** is an academic software development project that implements an intelligent, deterministic, and transparent **Dynamic Surge Pricing Engine** for ride-hailing applications, calibrated for Indian transport operating economics (INR / ₹). In modern transportation platforms, balancing passenger demand with driver supply is critical to maintaining operational liquidity, preventing driver shortages, and regulating localized congestion.
 
 The system dynamically calculates ride fares based on:
-1. **Base Ride Fare** (standard fixed vehicle access fee).
-2. **Distance Travelled** (per-kilometer tariff).
-3. **Estimated Journey Duration** (per-minute transit time charge).
+1. **Base Ride Fare** (standard fixed vehicle access fee in ₹).
+2. **Distance Travelled** (per-kilometer tariff in ₹/km).
+3. **Estimated Journey Duration** (per-minute transit time charge in ₹/min).
 4. **Current Demand** (active passenger booking requests in the dispatch sector).
 5. **Available Drivers** (active, unassigned drivers patrolling the dispatch sector).
 6. **Peak-Hour Status** (temporal demand multiplier for commuter rush hours).
@@ -33,12 +34,12 @@ $$\text{DistanceCharge} = \text{Distance (km)} \times \text{RatePerKm}$$
 $$\text{TimeCharge} = \text{Duration (min)} \times \text{RatePerMin}$$
 $$\text{NormalFare} = \text{BaseFare} + \text{DistanceCharge} + \text{TimeCharge}$$
 
-#### Standard Tariff Rate Cards:
-| Vehicle Category | Base Fare | Per Km Rate | Per Minute Rate |
+#### Standard Indian Tariff Rate Cards (INR / ₹):
+| Vehicle Category | Base Fare (₹) | Per Km Rate (₹/km) | Per Minute Rate (₹/min) |
 | :--- | :---: | :---: | :---: |
-| **Economy (Mini)** | $2.50 | $0.90 | $0.15 |
-| **Standard (Sedan)** | $3.50 | $1.25 | $0.25 |
-| **Premium (SUV)** | $5.50 | $2.10 | $0.40 |
+| **Economy (Mini)** | ₹ 50.00 | ₹ 12.00 | ₹ 1.50 |
+| **Standard (Sedan)** | ₹ 60.00 | ₹ 15.00 | ₹ 2.00 |
+| **Premium (SUV)** | ₹ 100.00 | ₹ 22.00 | ₹ 3.00 |
 
 ---
 
@@ -82,7 +83,7 @@ $$\text{Surge Delta} = \text{Final Fare} - \text{NormalFare}$$
 D:\CDC\
 ├── bin\                                    // Compiled JVM bytecode classes
 ├── docs\
-│   └── RideFare_Technical_Report.pdf      // Comprehensive 15-chapter academic technical report
+│   └── RideFare_Technical_Report.pdf      // Comprehensive academic technical report
 ├── src\
 │   └── com\
 │       └── ridefare\
@@ -94,11 +95,11 @@ D:\CDC\
 │           │   ├── FareBreakdown.java      // Itemized financial and diagnostic result
 │           │   ├── MarketConditions.java   // Requests, drivers, peak hour, weather
 │           │   ├── RideRequest.java        // Origin, destination, distance, duration, tier
-│           │   ├── VehicleType.java        // Vehicle tier tariffs enum
+│           │   ├── VehicleType.java        // Vehicle tier tariffs enum (INR / ₹)
 │           │   └── WeatherCondition.java   // Environmental weather impact enum
 │           └── ui\
-│               ├── CommandLineUI.java      // Interactive terminal console interface
-│               └── GraphicalUI.java        // Clean Java Swing desktop interface
+│               ├── CommandLineUI.java      // Interactive terminal console interface (₹)
+│               └── GraphicalUI.java        // Clean Java Swing desktop interface (₹)
 ├── test\
 │   └── com\
 │       └── ridefare\
@@ -112,7 +113,7 @@ D:\CDC\
 ## 4. Key Architectural Features
 
 1. **Dual-Mode User Interface:**
-   - **Java Swing Desktop GUI:** Minimalist, clean corporate theme, live interactive sliders/inputs, automatic side-by-side vehicle tier comparison, and quick benchmark preset scenarios.
+   - **Java Swing Desktop GUI:** Minimalist, clean theme, live interactive inputs, automatic side-by-side vehicle tier comparison in ₹, and quick benchmark preset scenarios.
    - **Interactive CLI:** Menu-driven console interface designed for terminal environments, automated scripts, and evaluator demonstrations.
 2. **High-Precision Financial Arithmetic:**
    - Utilizes `java.math.BigDecimal` with `RoundingMode.HALF_UP` to prevent IEEE 754 floating-point inaccuracies.
@@ -131,16 +132,13 @@ D:\CDC\
 
 ### 5.1 Compiling from Source
 ```powershell
-# Create output directory
-mkdir bin
-
-# Compile all source files and test suite
-javac -d bin src/com/ridefare/*.java src/com/ridefare/*/*.java test/com/ridefare/*.java
+# Compile all source files and test suite with UTF-8 encoding
+javac -encoding UTF-8 -d bin src/com/ridefare/*.java src/com/ridefare/*/*.java test/com/ridefare/*.java
 ```
 
 ### 5.2 Building the Executable JAR
 ```powershell
-jar cfe RideFare.jar com.ridefare.Main -C bin .
+jar cfe RideFare.jar com.ridefare.Main -C bin com
 ```
 
 ### 5.3 Running the Application
@@ -167,7 +165,7 @@ java -jar RideFare.jar --help
 ## 6. Automated Testing and Verification
 
 The system includes a zero-dependency automated verification suite covering:
-- **Baseline Tariff Calculations:** Un-surged standard fares for all vehicle tiers.
+- **Baseline Tariff Calculations:** Un-surged standard fares for all vehicle tiers in ₹.
 - **Supply & Demand Dynamics:** Low demand, balanced markets, mild surge, high surge, and extreme surge.
 - **Environmental Compounding:** Peak hour multiplier, rainfall impact, and severe storm tests.
 - **Edge Cases & Boundaries:** Zero available drivers, zero ride requests, minimum (0.1 km) and maximum (500 km) distance thresholds, exact threshold transitions ($R=1.0, 1.5, 2.5$).
@@ -176,21 +174,21 @@ The system includes a zero-dependency automated verification suite covering:
 
 ### Executing the Test Suite
 ```powershell
-java -cp RideFare.jar com.ridefare.RideFareTest
+java -cp "bin" com.ridefare.RideFareTest
 ```
 
 ### Actual Test Execution Output
 ```
 ================================================================================
-              RIDEFARE AUTOMATED TEST SUITE EXECUTION (CP-044)                  
+              RIDEFARE AUTOMATED TEST SUITE EXECUTION (CP-044 - INR / ₹)        
 ================================================================================
 
---- Category 1: Baseline Fare Calculations ---
-  [PASS] Standard Fare Un-surged                       | Expected=21.00, Actual=21.00 | Base $3.50 + Dist $12.50 + Time $5.00
+--- Category 1: Baseline Fare Calculations (INR / ₹) ---
+  [PASS] Standard Fare Un-surged                       | Expected=250.00, Actual=250.00 | Base ₹60.00 + Dist ₹150.00 + Time ₹40.00
   [PASS] Standard Multiplier 1.00x                     | Expected=1.00, Actual=1.00 | Normal demand ratio 0.50
-  [PASS] Final Fare Equals Normal Fare                 | Expected=21.00, Actual=21.00 | No surge delta added
-  [PASS] Economy Tier Tariff                           | Expected=14.50, Actual=14.50 | Economy 10km, 20min
-  [PASS] Premium Tier Tariff                           | Expected=34.50, Actual=34.50 | Premium 10km, 20min
+  [PASS] Final Fare Equals Normal Fare                 | Expected=250.00, Actual=250.00 | No surge delta added
+  [PASS] Economy Tier Tariff                           | Expected=200.00, Actual=200.00 | Economy 10km, 20min (₹200.00)
+  [PASS] Premium Tier Tariff                           | Expected=380.00, Actual=380.00 | Premium 10km, 20min (₹380.00)
 
 --- Category 2: Supply and Demand Dynamics ---
   [PASS] Low Demand Multiplier                         | Expected=1.00, Actual=1.00 | Ratio 0.25 <= 1.0
@@ -244,20 +242,20 @@ java -cp RideFare.jar com.ridefare.RideFareTest
 Total Test Cases Executed: 41
 Passed:                    41 (100.0%)
 Failed:                    0
-Execution Time:            117 ms
+Execution Time:            82 ms
 ================================================================================
 [SUCCESS] ALL TEST CASES PASSED WITH 100% INTEGRITY.
 ```
 
 ---
 
-## 7. Sample Interactive Ride Calculation
+## 7. Sample Interactive Ride Calculation (INR / ₹)
 
 Below is an actual transaction executed through the RideFare pricing engine:
 
 ```
 ================================================================================
-                       ITEMIZED FARE ESTIMATE RECEIPT                           
+                   ITEMIZED FARE ESTIMATE RECEIPT (INR / ₹)                     
 ================================================================================
 Pickup Location:        Airport Terminal 1
 Destination:            Downtown Hotel
@@ -274,15 +272,15 @@ Effective Demand Ratio: 2.76
 Market Surge Level:     Extreme Demand Surge
 
 ----------------------------- FINANCIAL BREAKDOWN ------------------------------
-(+) Base Fare:                    $     3.50
-(+) Distance Charge (18.50 km):    $    23.13
-(+) Time Charge (35.0 mins):      $     8.75
+(+) Base Fare:                    ₹    60.00
+(+) Distance Charge (18.50 km):   ₹   277.50
+(+) Time Charge (35.0 mins):      ₹    70.00
 --------------------------------------------------------------------------------
-Standard Normal Fare:             $    35.38
+Standard Normal Fare:             ₹   407.50
 Surge Pricing Multiplier:             1.82x
-Dynamic Surge Additional Charge: +$    29.01
+Dynamic Surge Additional Charge: +₹   334.15
 ================================================================================
-TOTAL PAYABLE FARE:               $    64.39
+TOTAL PAYABLE FARE:               ₹   741.65
 ================================================================================
 System Notice: Substantial shortage of drivers relative to passenger requests.
 ================================================================================
@@ -296,4 +294,4 @@ This software engineering project adheres to:
 - Single Responsibility Principle (SRP) across model, engine, and UI packages.
 - Zero external libraries or runtime dependencies.
 - Complete documentation and reproduction instructions.
-- Full 15-chapter comprehensive academic technical report in `docs/RideFare_Technical_Report.pdf`.
+- Full comprehensive academic technical report in `docs/RideFare_Technical_Report.pdf`.

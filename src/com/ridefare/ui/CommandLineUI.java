@@ -17,18 +17,17 @@ import java.util.Scanner;
  * 
  * ROLE AND PURPOSE:
  * Provides an interactive, terminal-based Command Line Interface (CLI) for
- * the RideFare Dynamic Surge Pricing Engine. It allows users in console-only
- * or remote headless server environments to fully interact with the engine.
+ * the RideFare Dynamic Surge Pricing Engine, formatted in Indian Rupees (INR / ₹).
  * 
  * KEY FEATURES:
  * 1. Interactive Fare Calculation: Guides the user through entering trip endpoints,
  *    metrics, vehicle tiers, and market conditions with robust input validation.
  * 2. Multi-Tier Vehicle Comparison: Renders a side-by-side tabular comparison of
- *    Economy, Standard, and Premium fares for the exact same trip and market state.
+ *    Economy, Standard, and Premium fares for the exact same trip and market state in ₹.
  * 3. Benchmark Simulation Scenarios: Runs 6 pre-configured industry benchmark
  *    scenarios (low demand, balanced, peak commute, storm, zero drivers).
  * 4. Algorithm & Rate Card Inspection: Displays platform tariffs and piecewise formulas.
- * 5. Transparent ASCII Itemized Receipt: Outputs a clean, itemized receipt showing
+ * 5. Transparent ASCII Itemized Receipt: Outputs a clean, itemized receipt in ₹ showing
  *    all intermediate charges, effective ratios, multipliers, and diagnostic notes.
  * ============================================================================
  */
@@ -89,7 +88,7 @@ public class CommandLineUI {
     private void printWelcomeBanner() {
         System.out.println("================================================================================");
         System.out.println("            RIDEFARE: DYNAMIC SURGE PRICING ENGINE (PROJECT CP-044)             ");
-        System.out.println("               Domain: Travel, Transport and Logistics                         ");
+        System.out.println("               Domain: Travel, Transport and Logistics (INR / ₹)                ");
         System.out.println("================================================================================");
     }
 
@@ -120,11 +119,11 @@ public class CommandLineUI {
             double distance = promptDouble("Enter travel distance (in kilometers, e.g. 14.5): ");
             double duration = promptDouble("Enter estimated journey duration (in minutes, e.g. 25): ");
 
-            // Vehicle tier selection
+            // Vehicle tier selection (Indian Rupee tariffs)
             System.out.println("\nSelect Vehicle Type:");
-            System.out.println("  1. Economy (Mini)   - Base: $2.50 | $0.90/km | $0.15/min");
-            System.out.println("  2. Standard (Sedan) - Base: $3.50 | $1.25/km | $0.25/min");
-            System.out.println("  3. Premium (SUV)    - Base: $5.50 | $2.10/km | $0.40/min");
+            System.out.println("  1. Economy (Mini)   - Base: ₹50.00  | ₹12.00/km | ₹1.50/min");
+            System.out.println("  2. Standard (Sedan) - Base: ₹60.00  | ₹15.00/km | ₹2.00/min");
+            System.out.println("  3. Premium (SUV)    - Base: ₹100.00 | ₹22.00/km | ₹3.00/min");
             int vehicleChoice = promptInt("Select vehicle (1-3, default 2): ", 2);
             VehicleType vehicleType = mapVehicleChoice(vehicleChoice);
 
@@ -194,7 +193,7 @@ public class CommandLineUI {
             for (VehicleType type : VehicleType.values()) {
                 RideRequest req = new RideRequest(pickup, destination, distance, duration, type);
                 FareBreakdown b = engine.calculateFare(req, conditions);
-                System.out.printf("%-18s | $ %10.2f | %6.2fx | $ %10.2f | +$ %9.2f%n",
+                System.out.printf("%-18s | ₹ %10.2f | %6.2fx | ₹ %10.2f | +₹ %9.2f%n",
                         type.getDisplayName(), b.getNormalFare(), b.getSurgeMultiplier(),
                         b.getFinalFare(), b.getSurgeDelta());
             }
@@ -211,7 +210,7 @@ public class CommandLineUI {
      */
     private void handlePresetScenarios() {
         System.out.println("\n================================================================================");
-        System.out.println("                     BENCHMARK SIMULATION SCENARIOS                             ");
+        System.out.println("                     BENCHMARK SIMULATION SCENARIOS (INR / ₹)                   ");
         System.out.println("================================================================================");
 
         String pickup = "Central Station";
@@ -252,7 +251,7 @@ public class CommandLineUI {
     }
 
     /**
-     * Executes an individual scenario and prints its formatted output.
+     * Executes an individual scenario and prints its formatted output in Indian Rupees.
      */
     private void runScenario(String title, String pickup, String dest, double dist, double time,
                             VehicleType type, MarketConditions conditions) {
@@ -264,25 +263,25 @@ public class CommandLineUI {
                 conditions.isPeakHour(), conditions.getWeatherCondition().getDisplayName());
         System.out.printf("    Effective Ratio: %.2f | Surge Multiplier: %.2fx | Level: %s%n",
                 b.getEffectiveDemandRatio(), b.getSurgeMultiplier(), b.getDemandLevel());
-        System.out.printf("    Normal Fare: $%.2f | Final Fare: $%.2f (Delta: +$%.2f)%n",
+        System.out.printf("    Normal Fare: ₹%.2f | Final Fare: ₹%.2f (Delta: +₹%.2f)%n",
                 b.getNormalFare(), b.getFinalFare(), b.getSurgeDelta());
         System.out.printf("    Notes: %s%n", b.getNotes());
     }
 
     /**
-     * Displays platform rate cards, pricing formulas, and piecewise curve thresholds.
+     * Displays platform rate cards in Indian Rupees, pricing formulas, and piecewise curve thresholds.
      */
     private void displayAlgorithmAndRates() {
         System.out.println("\n================================================================================");
-        System.out.println("                 RIDEFARE PRICING ALGORITHM & RATE CARDS                        ");
+        System.out.println("                 RIDEFARE PRICING ALGORITHM & RATE CARDS (INR / ₹)              ");
         System.out.println("================================================================================");
-        System.out.println("\n1. VEHICLE RATE CARDS (BASE TARIFFS):");
+        System.out.println("\n1. VEHICLE RATE CARDS (BASE TARIFFS IN INDIAN RUPEES):");
         System.out.println("   +--------------------+-----------+------------+--------------+");
         System.out.println("   | Vehicle Category   | Base Fare | Per Km Rate| Per Min Rate |");
         System.out.println("   +--------------------+-----------+------------+--------------+");
-        System.out.println("   | Economy (Mini)     |   $2.50   |   $0.90    |    $0.15     |");
-        System.out.println("   | Standard (Sedan)   |   $3.50   |   $1.25    |    $0.25     |");
-        System.out.println("   | Premium (SUV)      |   $5.50   |   $2.10    |    $0.40     |");
+        System.out.println("   | Economy (Mini)     |  ₹ 50.00  |  ₹ 12.00   |    ₹ 1.50    |");
+        System.out.println("   | Standard (Sedan)   |  ₹ 60.00  |  ₹ 15.00   |    ₹ 2.00    |");
+        System.out.println("   | Premium (SUV)      |  ₹ 100.00 |  ₹ 22.00   |    ₹ 3.00    |");
         System.out.println("   +--------------------+-----------+------------+--------------+");
 
         System.out.println("\n2. PRICING FORMULA:");
@@ -306,7 +305,7 @@ public class CommandLineUI {
     }
 
     /**
-     * Renders a formatted, itemized ASCII receipt detailing every component of the fare.
+     * Renders a formatted, itemized ASCII receipt detailing every component of the fare in Indian Rupees.
      *
      * @param b Fully populated FareBreakdown record
      */
@@ -315,7 +314,7 @@ public class CommandLineUI {
         MarketConditions cond = b.getConditions();
 
         System.out.println("\n================================================================================");
-        System.out.println("                       ITEMIZED FARE ESTIMATE RECEIPT                           ");
+        System.out.println("                   ITEMIZED FARE ESTIMATE RECEIPT (INR / ₹)                     ");
         System.out.println("================================================================================");
         System.out.printf("Pickup Location:        %s%n", req.getPickupLocation());
         System.out.printf("Destination:            %s%n", req.getDestination());
@@ -337,22 +336,22 @@ public class CommandLineUI {
         System.out.printf("Market Surge Level:     %s%n", b.getDemandLevel());
 
         System.out.println("\n----------------------------- FINANCIAL BREAKDOWN ------------------------------");
-        System.out.printf("(+) Base Fare:                    $ %8.2f%n", b.getBaseFare());
-        System.out.printf("(+) Distance Charge (%.2f km):    $ %8.2f%n", req.getDistanceKm(), b.getDistanceCharge());
-        System.out.printf("(+) Time Charge (%.1f mins):      $ %8.2f%n", req.getDurationMinutes(), b.getTimeCharge());
+        System.out.printf("(+) Base Fare:                    ₹ %8.2f%n", b.getBaseFare());
+        System.out.printf("(+) Distance Charge (%.2f km):    ₹ %8.2f%n", req.getDistanceKm(), b.getDistanceCharge());
+        System.out.printf("(+) Time Charge (%.1f mins):      ₹ %8.2f%n", req.getDurationMinutes(), b.getTimeCharge());
         System.out.println("--------------------------------------------------------------------------------");
-        System.out.printf("Standard Normal Fare:             $ %8.2f%n", b.getNormalFare());
+        System.out.printf("Standard Normal Fare:             ₹ %8.2f%n", b.getNormalFare());
         System.out.printf("Surge Pricing Multiplier:           %6.2fx%n", b.getSurgeMultiplier());
         if (b.hasSurge()) {
-            System.out.printf("Dynamic Surge Additional Charge: +$ %8.2f%n", b.getSurgeDelta());
+            System.out.printf("Dynamic Surge Additional Charge: +₹ %8.2f%n", b.getSurgeDelta());
         } else {
-            System.out.println("Dynamic Surge Additional Charge:  $     0.00 (Standard Pricing Applies)");
+            System.out.println("Dynamic Surge Additional Charge:  ₹     0.00 (Standard Pricing Applies)");
         }
         System.out.println("================================================================================");
-        System.out.printf("TOTAL PAYABLE FARE:               $ %8.2f%n", b.getFinalFare());
+        System.out.printf("TOTAL PAYABLE FARE:               ₹ %8.2f%n", b.getFinalFare());
         System.out.println("================================================================================");
         System.out.printf("System Notice: %s%n", b.getNotes());
-        System.out.println("================================================================================\n");
+        System.out.println("================================================================================");
     }
 
     // ------------------------------------------------------------------------
