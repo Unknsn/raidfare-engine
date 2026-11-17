@@ -56,6 +56,11 @@ public class RideFareTest {
      * @param args Command-line arguments (unused)
      */
     public static void main(String[] args) {
+        try {
+            System.setOut(new java.io.PrintStream(System.out, true, "UTF-8"));
+            System.setErr(new java.io.PrintStream(System.err, true, "UTF-8"));
+        } catch (Exception ignored) {
+        }
         System.out.println("================================================================================");
         System.out.println("              RIDEFARE AUTOMATED TEST SUITE EXECUTION (CP-044 - INR / ₹)        ");
         System.out.println("================================================================================");

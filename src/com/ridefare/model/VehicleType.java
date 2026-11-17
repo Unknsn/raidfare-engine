@@ -5,68 +5,64 @@ package com.ridefare.model;
  * Domain Model: VehicleType.java
  * ============================================================================
  * 
- * ROLE AND PURPOSE:
- * Represents the distinct categories (tiers) of vehicles available within the
- * ride-hailing platform, along with their standardized base tariff structures
- * calibrated for the Indian ride-hailing market (INR / ₹).
+ * WHAT THIS FILE DOES:
+ * This enum defines the 3 vehicle categories available in the ride-hailing app,
+ * along with their base tariffs in Indian Rupees (₹).
  * 
- * DESIGN PRINCIPLE:
- * Using a Java enum guarantees type safety across the entire codebase. It eliminates
- * "magic strings" and prevents invalid vehicle categories from ever entering
- * the calculation pipeline.
+ * WHY USE AN ENUM?
+ * An 'enum' (enumeration) in Java is a special data type used to define a fixed
+ * set of constants. Using an enum prevents spelling mistakes (like typing "sedan"
+ * or "SEDAN" differently) and ensures only valid vehicle types can ever be chosen.
  * 
- * TARIFF RATE STRUCTURE (INDIAN RUPEES - ₹):
+ * TARIFF RATE CARDS (INDIAN RUPEES - ₹):
  * ----------------------------------------------------------------------------
- * Tier Category       | Base Fare (₹) | Per Km Rate (₹/km) | Per Min Rate (₹/min)
+ * Category            | Base Fare (₹) | Per Km Rate (₹/km) | Per Min Rate (₹/min)
  * --------------------+---------------+--------------------+---------------------
  * Economy (Mini)      |    ₹ 50.00    |       ₹ 12.00      |        ₹ 1.50
  * Standard (Sedan)    |    ₹ 60.00    |       ₹ 15.00      |        ₹ 2.00
  * Premium (SUV)       |    ₹ 100.00   |       ₹ 22.00      |        ₹ 3.00
  * ----------------------------------------------------------------------------
  * 
- * Each tier encapsulates the specific cost structure reflecting operating expenses,
- * vehicle capital expenditure, fuel efficiency, and passenger comfort levels.
+ * HOW THE RATES WORK:
+ * 1. Base Fare   : The starting fee charged when the cab arrives.
+ * 2. Per Km Rate : The fee for each kilometer driven.
+ * 3. Per Min Rate: The fee for each minute spent during the ride.
  * ============================================================================
  */
 public enum VehicleType {
 
     /**
-     * Compact entry-level vehicles (hatchbacks/minis/autos).
-     * Budget-conscious pricing with the lowest baseline rates.
+     * Compact entry-level vehicles (hatchbacks / autos / minis).
+     * Budget-friendly option with lower baseline rates.
      */
     ECONOMY("Economy (Mini)", 50.00, 12.00, 1.50),
 
     /**
-     * Standard mid-size commuter vehicles (sedans/prime).
-     * Platform benchmark tariff representing typical daily passenger travel in Indian metros.
+     * Mid-size comfortable sedans.
+     * The standard daily commuting option in Indian cities.
      */
     STANDARD("Standard (Sedan)", 60.00, 15.00, 2.00),
 
     /**
-     * Luxury and high-capacity vehicles (SUVs/Prime XL).
-     * Premium tariff for corporate travel, airport runs, larger groups, and extra luggage.
+     * Spacious luxury SUVs and larger vehicles.
+     * Higher rates for extra comfort, luggage room, and group travel.
      */
     PREMIUM("Premium (SUV)", 100.00, 22.00, 3.00);
 
-    /** Human-readable title displayed in UI dropdowns, CLI receipts, and reports */
+    /** User-friendly name displayed on screen (e.g. "Standard (Sedan)") */
     private final String displayName;
 
-    /** Fixed baseline fee charged upon dispatch, regardless of journey distance (₹) */
+    /** Fixed starting fee in Indian Rupees (₹) */
     private final double baseFare;
 
-    /** Distance-dependent variable tariff charged per traveled kilometer (₹/km) */
+    /** Fee per kilometer in Indian Rupees (₹/km) */
     private final double perKmRate;
 
-    /** Time-dependent variable tariff charged per elapsed journey minute (₹/min) */
+    /** Fee per minute in Indian Rupees (₹/min) */
     private final double perMinuteRate;
 
     /**
-     * Enum constructor binding fixed tariff parameters to each vehicle category.
-     *
-     * @param displayName   Formatted name for display purposes
-     * @param baseFare      Fixed flag-fall base fee in Indian Rupees (₹)
-     * @param perKmRate     Variable distance charge per kilometer (₹/km)
-     * @param perMinuteRate Variable duration charge per minute (₹/min)
+     * Constructor to assign rate values to each vehicle category.
      */
     VehicleType(String displayName, double baseFare, double perKmRate, double perMinuteRate) {
         this.displayName = displayName;
@@ -75,41 +71,28 @@ public enum VehicleType {
         this.perMinuteRate = perMinuteRate;
     }
 
-    /**
-     * Retrieves the human-readable display label.
-     * @return Formatted category string (e.g., "Standard (Sedan)")
-     */
+    /** Returns the formatted display name (e.g., "Economy (Mini)") */
     public String getDisplayName() {
         return displayName;
     }
 
-    /**
-     * Retrieves the fixed baseline flag-fall fare.
-     * @return Base fare amount in Indian Rupees (₹)
-     */
+    /** Returns the fixed base starting fare in ₹ */
     public double getBaseFare() {
         return baseFare;
     }
 
-    /**
-     * Retrieves the tariff charge per kilometer traveled.
-     * @return Distance rate in Indian Rupees per kilometer (₹/km)
-     */
+    /** Returns the rate per kilometer in ₹/km */
     public double getPerKmRate() {
         return perKmRate;
     }
 
-    /**
-     * Retrieves the tariff charge per minute of journey time.
-     * @return Time rate in Indian Rupees per minute (₹/min)
-     */
+    /** Returns the rate per minute in ₹/min */
     public double getPerMinuteRate() {
         return perMinuteRate;
     }
 
     /**
-     * Formats enum instance for Swing components and string concatenation.
-     * @return Display name
+     * Converts this vehicle type to its display name for printing.
      */
     @Override
     public String toString() {

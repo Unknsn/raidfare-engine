@@ -5,96 +5,70 @@ package com.ridefare.model;
  * Domain Model: MarketConditions.java
  * ============================================================================
  * 
- * ROLE AND PURPOSE:
- * Encapsulates the real-time macroeconomic environment within a given dispatch
- * zone at the exact moment a ride quote is requested.
+ * WHAT THIS FILE DOES:
+ * Represents the live supply and demand situation in the area at booking time:
+ * 1. rideRequests     : How many passengers are currently requesting rides.
+ * 2. availableDrivers : How many free drivers are currently available.
+ * 3. peakHour         : Whether it is rush hour (morning/evening office commute).
+ * 4. weatherCondition : Clear, Rain, Heavy Rain, or Storm.
  * 
- * CORE MARKET ATTRIBUTES:
- * 1. rideRequests     : Integer count of active passengers seeking rides in the zone.
- * 2. availableDrivers : Integer count of unassigned, active drivers in the zone.
- * 3. peakHour         : Boolean flag indicating if current time falls into rush hour.
- * 4. weatherCondition : Current meteorological status (CLEAR, RAIN, HEAVY_RAIN, STORM).
- * 
- * ZERO-DRIVER SUPPLY DEFENSE:
- * In a real ride-hailing system, if driver supply drops to zero while passenger
- * requests remain positive, dividing requests by drivers results in division by zero.
- * Rather than throwing an unchecked ArithmeticException, getRawDemandRatio()
- * returns Double.POSITIVE_INFINITY. The PricingEngine detects this condition and
- * safely triggers the maximum statutory regulatory surge cap (3.50x).
+ * IMPORTANT SAFETY RULE (ZERO DRIVERS):
+ * If availableDrivers is 0, dividing requests by drivers would normally cause a
+ * mathematical crash (Division by Zero). To prevent this, getRawDemandRatio()
+ * returns Double.POSITIVE_INFINITY. The PricingEngine detects this and cleanly
+ * applies the maximum emergency cap (3.50x) instead of crashing.
  * ============================================================================
  */
 public class MarketConditions {
 
-    /** Total passenger ride requests currently queued in the dispatch sector */
+    /** Number of active passenger booking requests */
     private final int rideRequests;
 
-    /** Total drivers currently online, unbooked, and available for dispatch */
+    /** Number of free drivers available in this dispatch area */
     private final int availableDrivers;
 
-    /** Indicates whether booking time corresponds to morning/evening peak commute */
+    /** True if it is currently rush hour (+20% demand weight) */
     private final boolean peakHour;
 
-    /** Prevailing weather condition in the geographic dispatch area */
+    /** Prevailing weather condition in the area */
     private final WeatherCondition weatherCondition;
 
     /**
-     * Constructs a validated, immutable snapshot of market conditions.
-     *
-     * @param rideRequests     Active booking request volume (>= 0)
-     * @param availableDrivers Active free driver supply (>= 0)
-     * @param peakHour         True if rush-hour surge multiplier applies
-     * @param weatherCondition Meteorological state (defaults to CLEAR if null)
+     * Creates a new snapshot of current market conditions.
      */
     public MarketConditions(int rideRequests, int availableDrivers, boolean peakHour, 
                             WeatherCondition weatherCondition) {
         this.rideRequests = rideRequests;
         this.availableDrivers = availableDrivers;
         this.peakHour = peakHour;
-        // Defensive null check: default to clear skies if not specified
         this.weatherCondition = (weatherCondition != null) ? weatherCondition : WeatherCondition.CLEAR;
     }
 
-    /**
-     * Retrieves the active ride request volume.
-     * @return Integer passenger request count
-     */
+    /** Returns the count of ride requests */
     public int getRideRequests() {
         return rideRequests;
     }
 
-    /**
-     * Retrieves the count of available drivers.
-     * @return Integer active driver count
-     */
+    /** Returns the count of available drivers */
     public int getAvailableDrivers() {
         return availableDrivers;
     }
 
-    /**
-     * Checks if peak hour traffic weighting is active.
-     * @return True during peak hours (1.20x multiplier), false otherwise
-     */
+    /** Returns true if peak rush hour is active */
     public boolean isPeakHour() {
         return peakHour;
     }
 
-    /**
-     * Retrieves the prevailing weather condition.
-     * @return WeatherCondition enum constant
-     */
+    /** Returns the weather condition */
     public WeatherCondition getWeatherCondition() {
         return weatherCondition;
     }
 
     /**
-     * Calculates the raw, unadjusted demand-to-supply ratio:
-     * Raw Ratio = rideRequests / availableDrivers
+     * Calculates the raw ratio of demand to supply:
+     *   Raw Ratio = Requests / Drivers
      * 
-     * Defensive Arithmetic:
-     * If availableDrivers is 0 or less, returns Double.POSITIVE_INFINITY
-     * to prevent an ArithmeticException / NaN and signal complete supply exhaustion.
-     *
-     * @return Unweighted ratio of demand to supply, or Double.POSITIVE_INFINITY
+     * If drivers is 0, returns Double.POSITIVE_INFINITY to prevent a crash.
      */
     public double getRawDemandRatio() {
         if (availableDrivers <= 0) {
@@ -103,10 +77,7 @@ public class MarketConditions {
         return (double) rideRequests / (double) availableDrivers;
     }
 
-    /**
-     * Formats market conditions into an informative summary string for receipts and logs.
-     * @return Formatted summary string
-     */
+    /** Formats the market condition into a readable summary string */
     @Override
     public String toString() {
         return String.format("Market [Requests: %d, Drivers: %d, Peak: %b, Weather: %s]",

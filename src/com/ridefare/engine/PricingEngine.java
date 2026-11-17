@@ -11,86 +11,84 @@ import java.math.RoundingMode;
 
 /**
  * ============================================================================
- * Business Logic Engine: PricingEngine.java
+ * Business Logic: PricingEngine.java
  * ============================================================================
  * 
- * ROLE AND PURPOSE:
- * The computational core of RideFare. It evaluates dynamic surge multipliers
- * and generates itemized financial fare breakdowns by synthesizing journey
- * parameters, vehicle tariffs, real-time demand-supply balance, peak hours,
- * and environmental weather conditions.
+ * WHAT THIS FILE DOES:
+ * This is the central mathematical brain of the RideFare application.
+ * It computes the dynamic surge multiplier and final payable ride fare in
+ * Indian Rupees (₹) using a transparent, 3-phase calculation pipeline.
  * 
- * MATHEMATICAL PRICING ARCHITECTURE (3-PHASE PIPELINE):
+ * THE 3-PHASE CALCULATION PIPELINE:
  * 
  * ----------------------------------------------------------------------------
- * PHASE 1: Baseline Unsurged Fare Calculation
+ * PHASE 1: Baseline Unsurged Fare Calculation (Standard Rates in ₹)
  * ----------------------------------------------------------------------------
- * Computes standard baseline fare based on physical journey metrics and vehicle tier:
+ * Calculates the standard fare based on the car category, distance, and duration:
+ *   Base Fare       = Starting fixed fee (₹50 for Mini, ₹60 for Sedan, ₹100 for SUV)
  *   Distance Charge = Distance (km) * PerKmRate
  *   Time Charge     = Duration (mins) * PerMinuteRate
- *   Normal Fare     = BaseFare + Distance Charge + Time Charge
+ *   Normal Fare     = Base Fare + Distance Charge + Time Charge
  * 
  * ----------------------------------------------------------------------------
  * PHASE 2: Effective Demand Ratio (R_eff) Synthesis
  * ----------------------------------------------------------------------------
- * Synthesizes the overall market pressure from raw counts and external multipliers:
- *   Raw Ratio (R_raw) = RideRequests / AvailableDrivers
- *   R_eff = R_raw * PeakHourFactor * WeatherFactor
- *   (If AvailableDrivers == 0, R_eff is treated as Double.POSITIVE_INFINITY).
+ * Measures the total demand pressure in the dispatch zone:
+ *   Raw Ratio (R_raw) = Ride Requests / Available Drivers
+ *   R_eff = R_raw * Peak Hour Multiplier * Weather Multiplier
+ *   (Peak Hour adds 1.20x; Weather adds 1.00x for Clear up to 1.50x for Storm).
  * 
  * ----------------------------------------------------------------------------
- * PHASE 3: Piecewise Continuous Surge Multiplier S(R_eff) Evaluation
+ * PHASE 3: Piecewise Continuous Surge Multiplier Curve (S)
  * ----------------------------------------------------------------------------
- * The surge multiplier function is defined as a continuous piecewise linear curve:
- *   Region 1: R_eff <= 1.0           => S = 1.00x (Normal demand, no surge)
- *   Region 2: 1.0 < R_eff <= 1.5     => S = 1.00 + 0.30 * (R_eff - 1.0)
- *   Region 3: 1.5 < R_eff <= 2.5     => S = 1.15 + 0.50 * (R_eff - 1.5)
- *   Region 4: R_eff > 2.5            => S = 1.65 + 0.65 * (R_eff - 2.5)
- *   Special : AvailableDrivers == 0  => S = 3.50x (Total supply exhaustion)
+ * Determines the multiplier based on the Effective Demand Ratio:
+ *   1. Normal Demand (R_eff <= 1.0) : Multiplier = 1.00x (Standard fare)
+ *   2. Mild Surge (1.0 < R_eff <= 1.5): Multiplier = 1.00 + 0.30 * (R_eff - 1.0)
+ *   3. High Surge (1.5 < R_eff <= 2.5): Multiplier = 1.15 + 0.50 * (R_eff - 1.5)
+ *   4. Extreme Surge (R_eff > 2.5)   : Multiplier = 1.65 + 0.65 * (R_eff - 2.5)
+ *   5. Zero Drivers (Supply Outage)  : Multiplier = 3.50x (Maximum regulatory cap)
  * 
- * STATUTORY CEILINGS & BOUNDARIES:
- *   S_clamped = min(3.50, max(1.00, S))
- *   Final Payable Fare = round(NormalFare * S_clamped)
+ * REGULATORY SAFEGUARD (MAXIMUM CAP):
+ *   To protect passengers from algorithmic price gouging, the surge multiplier
+ *   is strictly capped at a maximum of 3.50x.
  * 
- * WHY BIGDECIMAL IN FINANCIAL CALCULATIONS:
- * Standard primitive floats and doubles use IEEE 754 binary floating-point representation.
- * In IEEE 754, fractions like 0.1, 0.2, and 0.65 cannot be represented exactly in binary,
- * leading to subtle representation errors (e.g. 1.65 + 0.65 * 0.5 evaluates to 1.9749999999999999,
- * which rounds incorrectly to 1.97 instead of 1.98).
- * Using java.math.BigDecimal with RoundingMode.HALF_UP guarantees exact decimal precision
- * required for currency and regulatory compliance.
+ * WHY USE BIGDECIMAL INSTEAD OF DOUBLE?
+ * Standard computers use binary floating-point representation (IEEE 754) for
+ * 'double' and 'float'. Because numbers like 0.1 or 0.65 cannot be represented
+ * exactly in binary, small rounding errors happen (e.g. 1.65 + 0.65 * 0.5 becomes
+ * 1.9749999999999999 instead of 1.975). In banking and transport fares, this can
+ * cause 1-paisa calculation errors. Using Java's BigDecimal with RoundingMode.HALF_UP
+ * eliminates these errors and ensures exact financial accuracy.
  * ============================================================================
  */
 public class PricingEngine {
 
-    /** Regulatory minimum multiplier (fares never drop below 100% of standard tariff) */
+    /** Minimum surge multiplier (fares never drop below 100% of standard tariff) */
     public static final double MIN_SURGE_MULTIPLIER = 1.00;
 
-    /** Statutory maximum multiplier ceiling to prevent excessive price gouging (350% cap) */
+    /** Maximum statutory regulatory ceiling to prevent excessive surge (3.50x) */
     public static final double MAX_SURGE_MULTIPLIER = 3.50;
 
-    /** Temporal demand weight applied during peak rush hours (+20% demand pressure) */
+    /** Multiplier applied during morning and evening office rush hours (+20% demand) */
     public static final double PEAK_HOUR_MULTIPLIER = 1.20;
 
     /**
-     * Executes the complete 3-phase fare calculation pipeline.
+     * Calculates the complete itemized fare breakdown for a ride request.
      *
-     * @param request    The passenger's ride booking parameters
-     * @param conditions Current real-time market and environmental conditions
-     * @return Fully itemized FareBreakdown record
-     * @throws IllegalArgumentException if any input violates validation constraints
+     * @param request    The passenger's trip details (pickup, drop, distance, duration, car)
+     * @param conditions The current live market state (requests, drivers, peak, weather)
+     * @return Fully itemized FareBreakdown record in Indian Rupees (₹)
      */
     public FareBreakdown calculateFare(RideRequest request, MarketConditions conditions) {
-        // Enforce defensive validation before performing any computations
+        // Step 1: Validate inputs before doing any math
         FareValidator.validateRideRequest(request);
         FareValidator.validateMarketConditions(conditions);
 
         VehicleType type = request.getVehicleType();
 
         // --------------------------------------------------------------------
-        // PHASE 1: Baseline Unsurged Fare Calculation
+        // PHASE 1: Baseline Unsurged Fare Calculation (in ₹)
         // --------------------------------------------------------------------
-        // Convert rates and journey variables to BigDecimal to eliminate precision drift
         BigDecimal base = BigDecimal.valueOf(type.getBaseFare());
         BigDecimal dist = BigDecimal.valueOf(request.getDistanceKm())
                 .multiply(BigDecimal.valueOf(type.getPerKmRate()));
@@ -103,20 +101,20 @@ public class PricingEngine {
         double normalFare = round(baseFare + distanceCharge + timeCharge);
 
         // --------------------------------------------------------------------
-        // PHASE 2 & 3: Surge Multiplier Synthesis & Piecewise Evaluation
+        // PHASE 2 & 3: Dynamic Surge Synthesis and Evaluation
         // --------------------------------------------------------------------
         double effectiveRatio = calculateEffectiveDemandRatio(conditions);
         SurgeEvaluation surgeEval = evaluateSurge(conditions, effectiveRatio);
 
         // --------------------------------------------------------------------
-        // FINAL PRICING LEDGER ASSEMBLY
+        // FINAL PAYABLE FARE ASSEMBLY
         // --------------------------------------------------------------------
-        // Final Surged Fare = NormalFare * SurgeMultiplier (rounded to 2 decimal places)
+        // Final Fare = Normal Fare * Surge Multiplier (rounded to 2 decimal places in ₹)
         double finalFare = round(BigDecimal.valueOf(normalFare)
                 .multiply(BigDecimal.valueOf(surgeEval.multiplier))
                 .doubleValue());
 
-        // Return the immutable itemized breakdown object
+        // Return the complete itemized receipt
         return new FareBreakdown(
                 request,
                 conditions,
@@ -138,43 +136,37 @@ public class PricingEngine {
      * Formula:
      *   R_eff = (Requests / Drivers) * PeakFactor * WeatherFactor
      * 
-     * If availableDrivers is 0 or less, returns Double.POSITIVE_INFINITY to signal
-     * complete supply exhaustion without causing an ArithmeticException.
-     *
-     * @param conditions Real-time market state
-     * @return Effective demand ratio, or Double.POSITIVE_INFINITY if drivers == 0
+     * If availableDrivers is 0, returns Double.POSITIVE_INFINITY to cleanly
+     * signal complete driver scarcity without causing a division by zero crash.
      */
     public double calculateEffectiveDemandRatio(MarketConditions conditions) {
-        // Edge Case: Total supply exhaustion (zero drivers available)
+        // Special case: Zero available drivers in the zone
         if (conditions.getAvailableDrivers() <= 0) {
             return Double.POSITIVE_INFINITY;
         }
 
-        // Calculate raw ratio using high-precision BigDecimal division (6 decimal places)
+        // Divide requests by drivers with 6 decimal places of precision
         BigDecimal req = BigDecimal.valueOf(conditions.getRideRequests());
         BigDecimal drv = BigDecimal.valueOf(conditions.getAvailableDrivers());
         BigDecimal rawRatio = req.divide(drv, 6, RoundingMode.HALF_UP);
 
-        // Determine temporal and meteorological weighting factors
+        // Get peak hour factor (1.20x if true, 1.00x if false)
         BigDecimal peakFactor = BigDecimal.valueOf(conditions.isPeakHour() ? PEAK_HOUR_MULTIPLIER : 1.00);
+
+        // Get weather factor (1.00x for Clear up to 1.50x for Storm)
         BigDecimal weatherFactor = BigDecimal.valueOf(conditions.getWeatherCondition().getImpactMultiplier());
 
-        // Compound all factors into the effective ratio
+        // Compound all factors together
         BigDecimal effective = rawRatio.multiply(peakFactor).multiply(weatherFactor);
         return round(effective.doubleValue());
     }
 
     /**
-     * Immutable data container holding the intermediate outputs of surge evaluation.
+     * Simple helper class to store the intermediate outputs of surge evaluation.
      */
     public static class SurgeEvaluation {
-        /** Final evaluated surge multiplier (clamped between 1.00x and 3.50x) */
         public final double multiplier;
-
-        /** Human-readable status classification */
         public final String demandLevel;
-
-        /** Descriptive explanatory notes detailing market justification */
         public final String notes;
 
         public SurgeEvaluation(double multiplier, String demandLevel, String notes) {
@@ -186,20 +178,13 @@ public class PricingEngine {
 
     /**
      * Evaluates the piecewise linear surge curve against the effective demand ratio.
-     * 
-     * Piecewise Logic:
-     * - R_eff <= 1.0: Multiplier = 1.00x (Supply >= Demand; standard baseline rates).
-     * - 1.0 < R_eff <= 1.5: Mild Surge => S = 1.00 + 0.30 * (R_eff - 1.0).
-     * - 1.5 < R_eff <= 2.5: High Surge => S = 1.15 + 0.50 * (R_eff - 1.5).
-     * - R_eff > 2.5: Extreme Surge => S = 1.65 + 0.65 * (R_eff - 2.5).
-     * - Drivers == 0: Special case => S = 3.50x (Maximum regulatory ceiling).
      *
-     * @param conditions     Market state snapshot
-     * @param effectiveRatio Computed effective demand ratio
-     * @return SurgeEvaluation containing bounded multiplier, status title, and notes
+     * @param conditions     Current market conditions
+     * @param effectiveRatio The combined demand-to-supply ratio
+     * @return SurgeEvaluation containing the multiplier, status text, and explanatory notes
      */
     public SurgeEvaluation evaluateSurge(MarketConditions conditions, double effectiveRatio) {
-        // Special Safeguard: Zero Drivers Available (Supply Exhaustion)
+        // Safety Case: Zero drivers available (Complete Supply Outage)
         if (conditions.getAvailableDrivers() <= 0) {
             return new SurgeEvaluation(
                     MAX_SURGE_MULTIPLIER,
@@ -213,14 +198,14 @@ public class PricingEngine {
         String demandLevel;
         String notes;
 
-        // Piecewise curve segment routing
+        // Piecewise curve logic
         if (effectiveRatio <= 1.0) {
-            // Region 1: Balanced or over-supplied market
+            // Region 1: Demand is normal or drivers are abundant
             rawMult = BigDecimal.valueOf(MIN_SURGE_MULTIPLIER);
             demandLevel = "Normal Demand (No Surge)";
             notes = "Driver supply comfortably meets passenger requests. Standard baseline rates apply.";
         } else if (effectiveRatio <= 1.5) {
-            // Region 2: Mild demand pressure
+            // Region 2: Mild demand surge
             // Multiplier = 1.00 + 0.30 * (Ratio - 1.0)
             BigDecimal diff = ratio.subtract(BigDecimal.valueOf(1.0));
             rawMult = BigDecimal.valueOf(1.00).add(BigDecimal.valueOf(0.30).multiply(diff));
@@ -242,19 +227,19 @@ public class PricingEngine {
             notes = "Substantial shortage of drivers relative to passenger requests.";
         }
 
-        // Apply strict boundary enforcement (Clamping)
+        // Clamp strictly between minimum (1.00x) and maximum regulatory cap (3.50x)
         BigDecimal minBound = BigDecimal.valueOf(MIN_SURGE_MULTIPLIER);
         BigDecimal maxBound = BigDecimal.valueOf(MAX_SURGE_MULTIPLIER);
 
         if (rawMult.compareTo(minBound) < 0) {
-            rawMult = minBound; // Prevent multiplier dropping below 1.00x
+            rawMult = minBound;
         } else if (rawMult.compareTo(maxBound) > 0) {
-            rawMult = maxBound; // Prevent multiplier exceeding regulatory cap of 3.50x
+            rawMult = maxBound;
         }
 
         double boundedMultiplier = round(rawMult.doubleValue());
 
-        // Update diagnostic message if statutory ceiling was reached
+        // Informative note if the statutory ceiling was enforced
         if (boundedMultiplier >= MAX_SURGE_MULTIPLIER) {
             demandLevel = "Maximum Surge Cap Enforced (3.50x)";
             notes = "Extreme demand pressure. Surge pricing is strictly capped at platform regulatory ceiling (3.50x).";
@@ -264,10 +249,10 @@ public class PricingEngine {
     }
 
     /**
-     * Utility method to round floating-point numbers to exactly two decimal places
-     * using Half-Up rounding (banker's / commercial currency standard).
+     * Utility method to round floating-point currency numbers to exactly 2 decimal
+     * places using Half-Up rounding (commercial standard).
      *
-     * @param value Raw numerical value
+     * @param value The raw double value
      * @return Rounded double value with 2 decimal precision
      */
     public static double round(double value) {

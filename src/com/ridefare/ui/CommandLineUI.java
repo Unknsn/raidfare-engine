@@ -43,6 +43,10 @@ public class CommandLineUI {
      * Constructs a new CommandLineUI instance.
      */
     public CommandLineUI() {
+        try {
+            System.setOut(new java.io.PrintStream(System.out, true, "UTF-8"));
+        } catch (Exception ignored) {
+        }
         this.engine = new PricingEngine();
         this.scanner = new Scanner(System.in);
     }
