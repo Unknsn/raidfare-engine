@@ -1,6 +1,10 @@
-# Compiled class files
-bin/
+# Compiled class and archive files
 *.class
+*.jar
+bin/
+build/
+out/
+target/
 
 # Build artifacts / logs
 *.log

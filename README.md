@@ -1,35 +1,34 @@
-# RideFare: Dynamic Surge Pricing Engine (CLI Edition)
+# RideFare: Dynamic Surge Pricing Engine
 
 **Project ID:** CP-044  
 **Domain:** Travel, Transport and Logistics (Intelligent Systems)  
-**Currency Standard:** Indian Rupees (INR / ₹)  
-**Interface Mode:** Pure Command Line Interface (CLI)  
-**Difficulty Level:** Beginner to Intermediate  
-**Language:** Java (JDK 17+) — 100% Pure Standard Edition (Zero External Dependencies)  
+**Currency:** Indian Rupees (INR / ₹)  
+**Interface:** Command Line Interface (CLI)  
+**Difficulty:** Beginner to Intermediate  
+**Language:** Pure Java (JDK 17+) — Zero External Dependencies  
+**Execution:** Runs directly from source with `java src/com/ridefare/Main.java` (No JAR or build tool required!)  
 
 ---
 
 ## 1. Project Overview
 
-**RideFare** is a clean, easy-to-understand Java academic project that demonstrates how modern ride-hailing platforms (like Ola and Uber) calculate dynamic ride fares. When many passengers want rides at the same time but few drivers are on the road, fares adjust dynamically ("surge pricing") to balance supply and demand.
+**RideFare** is a clean, simple, and practical Java project that demonstrates how dynamic surge pricing works in ride-hailing services (like Ola and Uber).
 
-The project is built as a **pure terminal application (CLI)** designed to be simple, transparent, and easy for any student or evaluator to run, understand, and test.
+When passenger demand increases or available drivers decrease, the system dynamically calculates a fair surge multiplier to balance supply and demand while strictly capping fares at a statutory maximum ceiling (3.50x) to protect passengers.
 
-### What the Engine Considers:
-1. **Base Ride Fare:** A fixed starting charge when the ride begins (₹).
-2. **Distance Travelled:** Kilometers traveled multiplied by the rate per km (₹/km).
-3. **Journey Duration:** Minutes spent on the road multiplied by the rate per minute (₹/min).
-4. **Current Demand:** Active passenger booking requests in the dispatch area.
-5. **Available Drivers:** Active, free drivers ready to accept rides.
-6. **Peak Rush Hour:** Morning and evening office rush hour multiplier ($1.20\times$).
-7. **Weather Impact:** Rain, heavy rain, or storm multipliers ($1.00\times$ to $1.50\times$).
-8. **Vehicle Categories:** Economy (Mini), Standard (Sedan), and Premium (SUV).
+### Key Factors Considered:
+1. **Base Starting Fare:** Fixed flag-down fee in Indian Rupees (₹).
+2. **Distance Travelled:** Kilometers travelled multiplied by per-km rate (₹/km).
+3. **Journey Duration:** Minutes spent in the ride multiplied by per-minute rate (₹/min).
+4. **Current Demand:** Number of active passenger booking requests in the zone.
+5. **Available Drivers:** Number of available drivers ready to accept rides.
+6. **Peak Rush Hour:** Rush hour demand weighting multiplier (1.20x).
+7. **Weather Impact:** Clear (1.00x), Rain (1.15x), Heavy Rain (1.30x), Storm (1.50x).
+8. **Vehicle Categories:** Economy (Mini), Standard (Sedan), Premium (SUV).
 
 ---
 
-## 2. Realistic Indian Tariff Rate Cards (INR / ₹)
-
-The baseline tariffs are calibrated to typical Indian city ride-hailing rates:
+## 2. Realistic Indian Tariff Rates (INR / ₹)
 
 | Vehicle Category | Base Starting Fee (₹) | Rate Per Km (₹/km) | Rate Per Minute (₹/min) | Example: 10 km / 20 min Trip |
 | :--- | :---: | :---: | :---: | :---: |
@@ -39,96 +38,88 @@ The baseline tariffs are calibrated to typical Indian city ride-hailing rates:
 
 ---
 
-## 3. How the Pricing Algorithm Works (3 Simple Steps)
+## 3. How the Pricing Algorithm Works
 
-### Step 1: Calculate Standard (Unsurged) Normal Fare
+### Step 1: Calculate Normal (Unsurged) Fare
 $$\text{Distance Charge} = \text{Distance (km)} \times \text{Rate Per Km}$$
 $$\text{Time Charge} = \text{Duration (mins)} \times \text{Rate Per Minute}$$
 $$\text{Normal Fare} = \text{Base Fare} + \text{Distance Charge} + \text{Time Charge}$$
 
-### Step 2: Measure Market Demand Pressure ($R_{\text{eff}}$)
+### Step 2: Calculate Effective Demand Ratio ($R_{\text{eff}}$)
 $$\text{Raw Ratio} = \frac{\text{Ride Requests}}{\text{Available Drivers}}$$
-$$R_{\text{eff}} = \text{Raw Ratio} \times \text{Peak Hour Factor} \times \text{Weather Factor}$$
+$$R_{\text{eff}} = \text{Raw Ratio} \times \text{Peak Factor} \times \text{Weather Factor}$$
 
-- **Peak Hour Factor:** `1.20x` during rush hours; `1.00x` normally.
-- **Weather Factor:** Clear (`1.00x`), Moderate Rain (`1.15x`), Heavy Rain (`1.30x`), Severe Storm (`1.50x`).
+- **Peak Factor:** 1.20x during rush hours; 1.00x normally.
+- **Weather Factor:** Clear (1.00x), Rain (1.15x), Heavy Rain (1.30x), Storm (1.50x).
 
-### Step 3: Determine Surge Multiplier ($S$)
-- **Normal Market ($R_{\text{eff}} \le 1.0$):** Multiplier = **$1.00\times$** (No extra charge).
+### Step 3: Piecewise Continuous Surge Multiplier Curve
+- **Normal Demand ($R_{\text{eff}} \le 1.0$):** Multiplier = **$1.00\times$** (Standard fare).
 - **Mild Demand ($1.0 < R_{\text{eff}} \le 1.5$):** Multiplier = **$1.00 + 0.30 \times (R_{\text{eff}} - 1.0)$**.
 - **High Demand ($1.5 < R_{\text{eff}} \le 2.5$):** Multiplier = **$1.15 + 0.50 \times (R_{\text{eff}} - 1.5)$**.
 - **Extreme Demand ($R_{\text{eff}} > 2.5$):** Multiplier = **$1.65 + 0.65 \times (R_{\text{eff}} - 2.5)$**.
 - **Zero Drivers Available:** Multiplier = **$3.50\times$** (Special emergency cap).
 
 ### Consumer Protection Ceiling (Maximum Cap):
-To protect passengers from unfair price gouging, the surge multiplier is **strictly capped at a maximum of 3.50x**.
+To prevent price gouging, the surge multiplier is **strictly capped at a maximum of 3.50x**.
 
 $$\text{Final Fare} = \text{round}(\text{Normal Fare} \times S, 2)$$
-$$\text{Surge Delta (Extra Charge)} = \text{Final Fare} - \text{Normal Fare}$$
+$$\text{Surge Delta} = \text{Final Fare} - \text{Normal Fare}$$
 
 ---
 
 ## 4. Project Directory Structure
 
-The project has a clean, focused, and minimal structure with no clutter:
-
 ```
 D:\CDC\
 ├── docs\
-│   └── RideFare_Technical_Report.pdf      // Comprehensive academic technical report
+│   └── RideFare_Technical_Report.pdf      // Comprehensive 17-page academic technical report
 ├── src\
 │   └── com\
 │       └── ridefare\
 │           ├── Main.java                   // Application launcher
+│           ├── RideFareTest.java           // 41-case automated test suite
 │           ├── engine\
-│           │   ├── FareValidator.java      // Input validation (prevents negative values)
-│           │   └── PricingEngine.java      // Core pricing algorithm (pure BigDecimal math)
+│           │   ├── FareValidator.java      // Input validation (prevents negative/invalid inputs)
+│           │   └── PricingEngine.java      // Dynamic pricing calculation (BigDecimal math)
 │           ├── model\
-│           │   ├── FareBreakdown.java      // Itemized receipt object
-│           │   ├── MarketConditions.java   // Requests, drivers, peak hour, weather
-│           │   ├── RideRequest.java        // Origin, destination, distance, duration, car
-│           │   ├── VehicleType.java        // Car categories enum in ₹ (Mini, Sedan, SUV)
+│           │   ├── FareBreakdown.java      // Itemized receipt record in ₹
+│           │   ├── MarketConditions.java   // Requests, drivers, peak hour, weather snapshot
+│           │   ├── RideRequest.java        // Origin, destination, distance, duration, car tier
+│           │   ├── VehicleType.java        // Vehicle categories enum in ₹ (Mini, Sedan, SUV)
 │           │   └── WeatherCondition.java   // Weather conditions enum (Clear to Storm)
 │           └── ui\
-│               └── CommandLineUI.java      // Interactive terminal menu & receipt printer
-├── test\
-│   └── com\
-│       └── ridefare\
-│           └── RideFareTest.java           // 41-case automated test suite
-├── RideFare.jar                            // Standalone executable JAR package
-└── README.md                               // Documentation guide
+│               └── CommandLineUI.java      // Interactive CLI menu & ASCII receipt printer
+├── .gitignore                              // Git ignore rules (ignores .class, .jar, bin)
+└── README.md                               // Documentation and execution guide
 ```
 
 ---
 
-## 5. How to Compile and Run
+## 5. How to Run (Direct Execution — No Build Tools Needed!)
 
-### Prerequisites
-- Any standard computer with Java installed (JDK 17 or higher).
-- Command Prompt, PowerShell, or Linux Terminal.
-
-### Option A: Run the Pre-built JAR (Easiest)
+### Run the Interactive CLI Application:
+From the project root directory, run:
 ```bash
-java -jar RideFare.jar
+java src/com/ridefare/Main.java
+```
+*(Or if your terminal is already inside `src/com/ridefare`, simply run: `java Main.java`)*
+
+### Show Usage Help:
+```bash
+java src/com/ridefare/Main.java --help
 ```
 
-### Option B: Compile from Source Code
-```powershell
-# 1. Compile all Java files into a temporary build folder
-javac -encoding UTF-8 -d build src/com/ridefare/*.java src/com/ridefare/*/*.java test/com/ridefare/*.java
-
-# 2. Run the interactive CLI application
-java -cp build com.ridefare.Main
-
-# 3. Run the automated test suite
-java -cp build com.ridefare.RideFareTest
+### Run the Automated Test Suite (41 Tests):
+```bash
+java src/com/ridefare/Main.java --test
 ```
+*(Alternatively, run directly: `java src/com/ridefare/RideFareTest.java`)*
 
 ---
 
 ## 6. Interactive CLI Menu Walkthrough
 
-When you run the application, you see a clean, numbered menu:
+When you launch `Main.java`, you see a clean terminal menu:
 
 ```text
 ================================================================================
@@ -146,73 +137,46 @@ When you run the application, you see a clean, numbered menu:
 Enter your choice (1-5): 
 ```
 
-### Option 1: Interactive Fare Calculation
-Prompts you for trip details (pickup, drop, km, minutes, car tier) and live conditions (requests, drivers, peak, weather), then prints an itemized receipt:
-
+### Sample Itemized Receipt (Option 1):
 ```text
 ================================================================================
                    ITEMIZED FARE ESTIMATE RECEIPT (INR / ₹)                     
 ================================================================================
-Pickup Location:        Central Railway Station
-Destination:            International Airport
-Distance & Duration:    18.50 km | 32.0 minutes
+Pickup Location:        Majestic
+Destination:            Whitefield
+Distance & Duration:    22.00 km | 50.0 minutes
 Vehicle Category:       Standard (Sedan)
 
 ----------------------------- MARKET DIAGNOSTICS -------------------------------
-Active Requests:        45
-Available Drivers:      20
-Raw Demand-Supply Ratio:2.25
+Active Requests:        35
+Available Drivers:      15
+Raw Demand-Supply Ratio:2.33
 Peak Hour Adjustment:   Active (1.20x)
-Weather Condition:      Moderate Rain (1.15x impact)
-Effective Demand Ratio: 3.11
+Weather Condition:      Clear / Normal (1.00x impact)
+Effective Demand Ratio: 2.80
 Market Surge Level:     Extreme Demand Surge
 
 ----------------------------- FINANCIAL BREAKDOWN ------------------------------
 (+) Base Fare:                    ₹    60.00
-(+) Distance Charge (18.50 km):   ₹   277.50
-(+) Time Charge (32.0 mins):      ₹    64.00
+(+) Distance Charge (22.00 km):    ₹   330.00
+(+) Time Charge (50.0 mins):      ₹   100.00
 --------------------------------------------------------------------------------
-Standard Normal Fare:             ₹   401.50
-Surge Pricing Multiplier:             2.05x
-Dynamic Surge Additional Charge: +₹   421.58
+Standard Normal Fare:             ₹   490.00
+Surge Pricing Multiplier:             1.85x
+Dynamic Surge Additional Charge: +₹   416.50
 ================================================================================
-TOTAL PAYABLE FARE:               ₹   823.08
+TOTAL PAYABLE FARE:               ₹   906.50
 ================================================================================
 System Notice: Substantial shortage of drivers relative to passenger requests.
 ================================================================================
 ```
 
-### Option 2: Side-by-Side Vehicle Comparison
-Compares all three tiers under the exact same journey and market conditions:
-
-```text
-================================================================================
-FARE COMPARISON: 'Indiranagar' to 'Electronic City' (18.00 km, 40.0 mins)
-Market: Requests=30, Drivers=15, Peak=true, Weather=Clear / Normal
-================================================================================
-Vehicle Tier       | Normal Fare  | Surge    | Final Fare   | Difference  
---------------------------------------------------------------------------------
-Economy (Mini)     | ₹     326.00 |  1.60x   | ₹     521.60 | +₹    195.60
-Standard (Sedan)   | ₹     410.00 |  1.60x   | ₹     656.00 | +₹    246.00
-Premium (SUV)      | ₹     616.00 |  1.60x   | ₹     985.60 | +₹    369.60
-================================================================================
-```
-
-### Option 3: Benchmark Simulation Scenarios
-Instantly runs 6 industry standard scenarios (Low demand, Balanced, Peak commute, Monsoon downpour, Severe storm, and Zero drivers).
-
 ---
 
-## 7. Automated Test Suite (41 Tests)
+## 7. Automated Test Suite (100% Passing)
 
-To ensure the code is rock-solid and completely bug-free, an automated test suite is included in `test/com/ridefare/RideFareTest.java`. It runs without needing any extra libraries like JUnit.
+The project includes an automated test suite verifying all 41 operational and edge-case scenarios:
 
-### How to Run Tests:
-```powershell
-java -cp RideFare.jar com.ridefare.RideFareTest
-```
-
-### Test Results Summary:
 ```text
 ================================================================================
               RIDEFARE AUTOMATED TEST SUITE EXECUTION (CP-044 - INR / ₹)        
@@ -220,17 +184,17 @@ java -cp RideFare.jar com.ridefare.RideFareTest
 Total Test Cases Executed: 41
 Passed:                    41 (100.0%)
 Failed:                    0
-Execution Time:            82 ms
+Execution Time:            445 ms
 ================================================================================
 [SUCCESS] ALL TEST CASES PASSED WITH 100% INTEGRITY.
 ```
 
 ---
 
-## 8. Why This Code is Great for Beginners
+## 8. Why This Implementation is Student-Friendly
 
-1. **Easy to Read:** Clear variable and method names (`baseFare`, `distanceCharge`, `calculateFare`).
-2. **Well Commented:** Every class, method, and math formula is explained in simple English.
-3. **Pure Java SE:** No complicated third-party frameworks, annotations, or XML configs.
-4. **Accurate Math:** Uses `BigDecimal` with Half-Up rounding to avoid binary floating-point math mistakes.
-5. **Safe & Defensive:** Handles division-by-zero safely if available drivers is 0.
+1. **Zero External Dependencies:** Built entirely with standard Java SE. No Maven, Gradle, or external libraries required.
+2. **No Build Artifacts:** Runs directly from source (`java src/com/ridefare/Main.java`) without needing compilation steps, JAR files, or leaving `.class` files on disk.
+3. **Exact Financial Accuracy:** Uses `BigDecimal` with Half-Up rounding to avoid floating-point math errors.
+4. **Defensive Input Handling:** Validates trip distances, durations, and counts gracefully without runtime crashes.
+5. **Clean Code & Clear Comments:** Every method and calculation is simple, readable, and clearly documented.
