@@ -15,13 +15,38 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 
 /**
- * Clean, practical Java Swing desktop interface for RideFare.
+ * ============================================================================
+ * Presentation Layer: GraphicalUI.java
+ * ============================================================================
+ * 
+ * ROLE AND PURPOSE:
+ * Provides a clean, modern, and practical Java Swing desktop interface for
+ * the RideFare Dynamic Surge Pricing Engine.
+ * 
+ * DESIGN PRINCIPLES:
+ * 1. Minimal & Functional Layout: Clean two-column design separating input controls
+ *    (left pane) from real-time calculations and diagnostic outputs (right pane).
+ * 2. Neutral Palette: Professional slate, deep teal, and neutral gray tones
+ *    avoiding artificial or distracting decorative elements.
+ * 3. Responsive Component Placement: The Quick Benchmark Scenario selector is docked
+ *    in an independent header container with full horizontal width, preventing
+ *    any clipping or overlap by adjacent titled border groups.
+ * 4. High-Contrast Typography: Action buttons feature explicit dark-contrast
+ *    foreground colors for optimal legibility across native OS themes.
+ * 5. Instant Visual Feedback: Surge multipliers and final fares are color-coded
+ *    (green for normal, orange-red for active surge) to immediately communicate market status.
+ * 6. Multi-Tier Comparative Card: Automatically displays side-by-side fares for
+ *    Economy, Standard, and Premium tiers for every calculation.
+ * ============================================================================
  */
 public class GraphicalUI extends JFrame {
 
+    /** Business logic pricing engine instance */
     private final PricingEngine engine;
 
-    // Input fields
+    // ------------------------------------------------------------------------
+    // USER INPUT COMPONENTS
+    // ------------------------------------------------------------------------
     private JTextField txtPickup;
     private JTextField txtDestination;
     private JTextField txtDistance;
@@ -34,7 +59,9 @@ public class GraphicalUI extends JFrame {
     private JComboBox<WeatherCondition> cmbWeather;
     private JComboBox<String> cmbPresets;
 
-    // Output labels
+    // ------------------------------------------------------------------------
+    // CALCULATION & DIAGNOSTIC OUTPUT COMPONENTS
+    // ------------------------------------------------------------------------
     private JLabel lblBaseFare;
     private JLabel lblDistanceCharge;
     private JLabel lblTimeCharge;
@@ -46,43 +73,56 @@ public class GraphicalUI extends JFrame {
     private JLabel lblDemandLevel;
     private JTextArea txtNotes;
 
-    // Multi-tier comparison labels
+    // Multi-tier vehicle comparison labels
     private JLabel lblEconomyCompare;
     private JLabel lblStandardCompare;
     private JLabel lblPremiumCompare;
 
+    /**
+     * Constructs the main application window and initializes all UI components.
+     */
     public GraphicalUI() {
         super("RideFare - Dynamic Surge Pricing Engine (CP-044)");
         this.engine = new PricingEngine();
 
+        // Apply native operating system look and feel
         initLookAndFeel();
+
+        // Build UI component hierarchy
         initComponents();
 
+        // Window properties and positioning
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(920, 720);
         setMinimumSize(new Dimension(860, 680));
-        setLocationRelativeTo(null);
+        setLocationRelativeTo(null); // Center window on primary monitor
     }
 
+    /**
+     * Attempts to set the Java Swing Look and Feel to match the native operating system.
+     */
     private void initLookAndFeel() {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception ignored) {
-            // Fallback to default Swing Look & Feel
+            // Fallback gracefully to default Metal/Ocean Swing Look & Feel
         }
     }
 
+    /**
+     * Assembles the root content pane and major layout panels.
+     */
     private void initComponents() {
         JPanel contentPane = new JPanel(new BorderLayout(10, 10));
         contentPane.setBackground(new Color(245, 247, 250));
         contentPane.setBorder(new EmptyBorder(12, 16, 16, 16));
         setContentPane(contentPane);
 
-        // Header Panel
+        // 1. Top Header Banner
         JPanel headerPanel = createHeaderPanel();
         contentPane.add(headerPanel, BorderLayout.NORTH);
 
-        // Main Center Area (Split Left: Inputs, Right: Outputs)
+        // 2. Main Center Area (Split Left: Inputs, Right: Outputs)
         JPanel centerPanel = new JPanel(new GridLayout(1, 2, 14, 0));
         centerPanel.setOpaque(false);
 
@@ -93,17 +133,20 @@ public class GraphicalUI extends JFrame {
         centerPanel.add(rightPanel);
         contentPane.add(centerPanel, BorderLayout.CENTER);
 
-        // Bottom Action Bar
+        // 3. Bottom Action Bar (Calculate & Reset buttons)
         JPanel bottomBar = createBottomBar();
         contentPane.add(bottomBar, BorderLayout.SOUTH);
 
-        // Pre-fill with sensible default sample values
+        // Pre-fill initial form fields with Benchmark Scenario 1 (Low Demand)
         loadPreset(1);
     }
 
+    /**
+     * Creates the top branding header panel with title and project metadata.
+     */
     private JPanel createHeaderPanel() {
         JPanel header = new JPanel(new BorderLayout());
-        header.setBackground(new Color(30, 41, 59));
+        header.setBackground(new Color(30, 41, 59)); // Dark slate background
         header.setBorder(new EmptyBorder(12, 16, 12, 16));
 
         JLabel title = new JLabel("RideFare Dynamic Surge Pricing Engine");
@@ -119,11 +162,17 @@ public class GraphicalUI extends JFrame {
         return header;
     }
 
+    /**
+     * Constructs the left-hand panel containing all input controls.
+     * Includes the Quick Benchmark scenario dropdown, Ride parameters, and Market conditions.
+     */
     private JPanel createInputPanel() {
         JPanel panel = new JPanel(new BorderLayout(0, 8));
         panel.setOpaque(false);
 
-        // Preset selector bar (stacked vertically with full width so it is never hidden or overlapped)
+        // Preset selector bar:
+        // Positioned in an independent NORTH container with BorderLayout(4, 4)
+        // so it has full horizontal width and is never overlapped by titled borders below it.
         JPanel presetPanel = new JPanel(new BorderLayout(4, 4));
         presetPanel.setOpaque(false);
         presetPanel.setBorder(new EmptyBorder(0, 2, 6, 2));
@@ -148,12 +197,12 @@ public class GraphicalUI extends JFrame {
         presetPanel.add(cmbPresets, BorderLayout.CENTER);
         panel.add(presetPanel, BorderLayout.NORTH);
 
-        // Form container holding Ride and Market groups
+        // Forms container holding the two input groups (Ride Info & Market Conditions)
         JPanel formsPanel = new JPanel();
         formsPanel.setLayout(new BoxLayout(formsPanel, BoxLayout.Y_AXIS));
         formsPanel.setOpaque(false);
 
-        // Ride Parameters Group
+        // Group 1: Ride Parameters
         JPanel rideGroup = new JPanel(new GridBagLayout());
         rideGroup.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(new Color(203, 213, 225)),
@@ -182,7 +231,7 @@ public class GraphicalUI extends JFrame {
         formsPanel.add(rideGroup);
         formsPanel.add(Box.createVerticalStrut(8));
 
-        // Market Conditions Group
+        // Group 2: Market Conditions
         JPanel marketGroup = new JPanel(new GridBagLayout());
         marketGroup.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(new Color(203, 213, 225)),
@@ -209,6 +258,9 @@ public class GraphicalUI extends JFrame {
         return panel;
     }
 
+    /**
+     * Helper method to add labeled rows to GridBagLayout form containers.
+     */
     private void addFormField(JPanel panel, GridBagConstraints gbc, int row, String label, JComponent field) {
         gbc.gridx = 0;
         gbc.gridy = row;
@@ -222,6 +274,10 @@ public class GraphicalUI extends JFrame {
         panel.add(field, gbc);
     }
 
+    /**
+     * Constructs the right-hand panel displaying fare breakdowns, diagnostics,
+     * and the multi-tier vehicle comparison card.
+     */
     private JPanel createOutputPanel() {
         JPanel panel = new JPanel(new BorderLayout(8, 8));
         panel.setOpaque(false);
@@ -231,6 +287,7 @@ public class GraphicalUI extends JFrame {
                 TitledBorder.LEFT, TitledBorder.TOP,
                 new Font("Segoe UI", Font.BOLD, 12), new Color(51, 65, 85)));
 
+        // Itemized financial grid
         JPanel breakdownGrid = new JPanel(new GridLayout(8, 2, 6, 4));
         breakdownGrid.setOpaque(false);
         breakdownGrid.setBorder(new EmptyBorder(6, 10, 6, 10));
@@ -253,8 +310,9 @@ public class GraphicalUI extends JFrame {
         lblSurgeMultiplier.setFont(new Font("Segoe UI", Font.BOLD, 13));
         lblSurgeDelta.setFont(valueFont);
 
+        // Prominent final fare styling (Deep teal green, 18pt bold)
         lblFinalFare.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        lblFinalFare.setForeground(new Color(15, 118, 110)); // Deep teal / green
+        lblFinalFare.setForeground(new Color(15, 118, 110));
 
         addBreakdownRow(breakdownGrid, "Base Fare:", lblBaseFare);
         addBreakdownRow(breakdownGrid, "Distance Charge:", lblDistanceCharge);
@@ -267,7 +325,7 @@ public class GraphicalUI extends JFrame {
 
         panel.add(breakdownGrid, BorderLayout.NORTH);
 
-        // Center: Status and Diagnostics
+        // Center section: Status level & transparent diagnostic notes
         JPanel statusPanel = new JPanel(new BorderLayout(4, 4));
         statusPanel.setOpaque(false);
         statusPanel.setBorder(new EmptyBorder(4, 10, 4, 10));
@@ -287,7 +345,7 @@ public class GraphicalUI extends JFrame {
         statusPanel.add(lblDemandLevel, BorderLayout.NORTH);
         statusPanel.add(new JScrollPane(txtNotes), BorderLayout.CENTER);
 
-        // Bottom of right panel: Vehicle Tier Comparison Card
+        // Bottom section: Vehicle Tier Comparison Card
         JPanel compareCard = new JPanel(new GridLayout(3, 1, 2, 2));
         compareCard.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(new Color(226, 232, 240)),
@@ -310,11 +368,13 @@ public class GraphicalUI extends JFrame {
         compareCard.add(lblPremiumCompare);
 
         statusPanel.add(compareCard, BorderLayout.SOUTH);
-
         panel.add(statusPanel, BorderLayout.CENTER);
         return panel;
     }
 
+    /**
+     * Helper method to add row pairs to the breakdown grid.
+     */
     private void addBreakdownRow(JPanel grid, String label, JLabel valueLabel) {
         JLabel l = new JLabel(label);
         l.setFont(new Font("Segoe UI", Font.PLAIN, 12));
@@ -322,10 +382,15 @@ public class GraphicalUI extends JFrame {
         grid.add(valueLabel);
     }
 
+    /**
+     * Constructs the bottom action button toolbar.
+     */
     private JPanel createBottomBar() {
         JPanel bar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 4));
         bar.setOpaque(false);
 
+        // High-contrast button text: dark slate (new Color(15, 23, 42)) ensures
+        // crystal-clear legibility on standard Windows gray button surfaces.
         JButton btnCalculate = new JButton("Calculate Dynamic Fare");
         btnCalculate.setFont(new Font("Segoe UI", Font.BOLD, 12));
         btnCalculate.setForeground(new Color(15, 23, 42));
@@ -342,8 +407,13 @@ public class GraphicalUI extends JFrame {
         return bar;
     }
 
+    /**
+     * Action event handler triggered when "Calculate Dynamic Fare" is clicked.
+     * Collects inputs, invokes engine, and updates GUI displays.
+     */
     private void onCalculateClicked(ActionEvent e) {
         try {
+            // Read and sanitize input fields
             String pickup = txtPickup.getText().trim();
             String destination = txtDestination.getText().trim();
             double distance = Double.parseDouble(txtDistance.getText().trim());
@@ -355,40 +425,52 @@ public class GraphicalUI extends JFrame {
             boolean peak = chkPeakHour.isSelected();
             WeatherCondition weather = (WeatherCondition) cmbWeather.getSelectedItem();
 
+            // Construct immutable domain models
             RideRequest request = new RideRequest(pickup, destination, distance, duration, vehicle);
             MarketConditions conditions = new MarketConditions(requests, drivers, peak, weather);
 
+            // Execute engine calculations
             FareBreakdown breakdown = engine.calculateFare(request, conditions);
+
+            // Update user interface displays
             updateOutputDisplay(breakdown);
             updateComparisonDisplay(request, conditions);
 
         } catch (NumberFormatException nfe) {
+            // Handle non-numeric text in numeric input fields
             JOptionPane.showMessageDialog(this,
                     "Please ensure numeric inputs (Distance, Duration, Requests, Drivers) contain valid numbers.",
                     "Input Format Error", JOptionPane.ERROR_MESSAGE);
         } catch (IllegalArgumentException iae) {
+            // Handle defensive domain validation rule violations
             JOptionPane.showMessageDialog(this,
                     iae.getMessage(),
                     "Validation Error", JOptionPane.WARNING_MESSAGE);
         } catch (Exception ex) {
+            // Handle unexpected runtime exceptions
             JOptionPane.showMessageDialog(this,
                     "An unexpected error occurred: " + ex.getMessage(),
                     "System Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
+    /**
+     * Updates all labels in the Fare Breakdown and Status panels with calculated values.
+     */
     private void updateOutputDisplay(FareBreakdown b) {
         lblBaseFare.setText(String.format("$ %.2f", b.getBaseFare()));
         lblDistanceCharge.setText(String.format("$ %.2f (%.1f km)", b.getDistanceCharge(), b.getRequest().getDistanceKm()));
         lblTimeCharge.setText(String.format("$ %.2f (%.1f min)", b.getTimeCharge(), b.getRequest().getDurationMinutes()));
         lblNormalFare.setText(String.format("$ %.2f", b.getNormalFare()));
 
+        // Display effective ratio or infinite flag
         if (Double.isInfinite(b.getEffectiveDemandRatio())) {
             lblEffectiveRatio.setText("INFINITE (No Supply)");
         } else {
             lblEffectiveRatio.setText(String.format("%.2f", b.getEffectiveDemandRatio()));
         }
 
+        // Color-code surge multiplier: orange-red for active surge, green for normal
         lblSurgeMultiplier.setText(String.format("%.2fx", b.getSurgeMultiplier()));
         if (b.getSurgeMultiplier() > 1.0) {
             lblSurgeMultiplier.setForeground(new Color(194, 65, 12)); // Red-orange
@@ -403,22 +485,25 @@ public class GraphicalUI extends JFrame {
         txtNotes.setText(b.getNotes());
     }
 
+    /**
+     * Computes and displays side-by-side fares for Economy, Standard, and Premium tiers.
+     */
     private void updateComparisonDisplay(RideRequest baseReq, MarketConditions cond) {
-        // Economy
+        // Economy Tier calculation
         RideRequest reqEco = new RideRequest(baseReq.getPickupLocation(), baseReq.getDestination(),
                 baseReq.getDistanceKm(), baseReq.getDurationMinutes(), VehicleType.ECONOMY);
         FareBreakdown bEco = engine.calculateFare(reqEco, cond);
         lblEconomyCompare.setText(String.format("• Economy: Normal: $%.2f | Surged: $%.2f (Delta: +$%.2f)",
                 bEco.getNormalFare(), bEco.getFinalFare(), bEco.getSurgeDelta()));
 
-        // Standard
+        // Standard Tier calculation
         RideRequest reqStd = new RideRequest(baseReq.getPickupLocation(), baseReq.getDestination(),
                 baseReq.getDistanceKm(), baseReq.getDurationMinutes(), VehicleType.STANDARD);
         FareBreakdown bStd = engine.calculateFare(reqStd, cond);
         lblStandardCompare.setText(String.format("• Standard: Normal: $%.2f | Surged: $%.2f (Delta: +$%.2f)",
                 bStd.getNormalFare(), bStd.getFinalFare(), bStd.getSurgeDelta()));
 
-        // Premium
+        // Premium Tier calculation
         RideRequest reqPrem = new RideRequest(baseReq.getPickupLocation(), baseReq.getDestination(),
                 baseReq.getDistanceKm(), baseReq.getDurationMinutes(), VehicleType.PREMIUM);
         FareBreakdown bPrem = engine.calculateFare(reqPrem, cond);
@@ -426,6 +511,9 @@ public class GraphicalUI extends JFrame {
                 bPrem.getNormalFare(), bPrem.getFinalFare(), bPrem.getSurgeDelta()));
     }
 
+    /**
+     * Listener invoked when the user selects a preset scenario from the dropdown.
+     */
     private void onPresetSelected() {
         int index = cmbPresets.getSelectedIndex();
         if (index > 0) {
@@ -433,9 +521,14 @@ public class GraphicalUI extends JFrame {
         }
     }
 
+    /**
+     * Loads preconfigured benchmark values into the form fields and triggers calculation.
+     *
+     * @param index Preset selection index (1 through 6)
+     */
     private void loadPreset(int index) {
         switch (index) {
-            case 1: // Low Demand
+            case 1: // Low Demand (Abundant Drivers)
                 txtPickup.setText("Residential Suburb");
                 txtDestination.setText("Shopping Mall");
                 txtDistance.setText("8.0");
@@ -490,7 +583,7 @@ public class GraphicalUI extends JFrame {
                 chkPeakHour.setSelected(true);
                 cmbWeather.setSelectedItem(WeatherCondition.STORM);
                 break;
-            case 6: // Zero Drivers Available
+            case 6: // Zero Drivers Available (Supply Exhaustion)
                 txtPickup.setText("Downtown Crossing");
                 txtDestination.setText("North Suburbs");
                 txtDistance.setText("14.0");
@@ -503,7 +596,7 @@ public class GraphicalUI extends JFrame {
                 break;
         }
 
-        // Trigger immediate calculation for the preset
+        // Automatically execute calculation for the loaded preset
         onCalculateClicked(null);
     }
 }

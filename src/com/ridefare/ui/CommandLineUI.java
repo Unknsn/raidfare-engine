@@ -11,18 +11,47 @@ import com.ridefare.model.WeatherCondition;
 import java.util.Scanner;
 
 /**
- * Command-line interactive user interface for RideFare.
+ * ============================================================================
+ * Presentation Layer: CommandLineUI.java
+ * ============================================================================
+ * 
+ * ROLE AND PURPOSE:
+ * Provides an interactive, terminal-based Command Line Interface (CLI) for
+ * the RideFare Dynamic Surge Pricing Engine. It allows users in console-only
+ * or remote headless server environments to fully interact with the engine.
+ * 
+ * KEY FEATURES:
+ * 1. Interactive Fare Calculation: Guides the user through entering trip endpoints,
+ *    metrics, vehicle tiers, and market conditions with robust input validation.
+ * 2. Multi-Tier Vehicle Comparison: Renders a side-by-side tabular comparison of
+ *    Economy, Standard, and Premium fares for the exact same trip and market state.
+ * 3. Benchmark Simulation Scenarios: Runs 6 pre-configured industry benchmark
+ *    scenarios (low demand, balanced, peak commute, storm, zero drivers).
+ * 4. Algorithm & Rate Card Inspection: Displays platform tariffs and piecewise formulas.
+ * 5. Transparent ASCII Itemized Receipt: Outputs a clean, itemized receipt showing
+ *    all intermediate charges, effective ratios, multipliers, and diagnostic notes.
+ * ============================================================================
  */
 public class CommandLineUI {
 
+    /** Business logic pricing engine instance */
     private final PricingEngine engine;
+
+    /** Standard input scanner for interactive console prompts */
     private final Scanner scanner;
 
+    /**
+     * Constructs a new CommandLineUI instance.
+     */
     public CommandLineUI() {
         this.engine = new PricingEngine();
         this.scanner = new Scanner(System.in);
     }
 
+    /**
+     * Starts the interactive command-line navigation loop.
+     * Continuously prompts the user until option 5 (Exit) is selected.
+     */
     public void start() {
         boolean running = true;
         printWelcomeBanner();
@@ -54,6 +83,9 @@ public class CommandLineUI {
         }
     }
 
+    /**
+     * Prints the primary application header banner to stdout.
+     */
     private void printWelcomeBanner() {
         System.out.println("================================================================================");
         System.out.println("            RIDEFARE: DYNAMIC SURGE PRICING ENGINE (PROJECT CP-044)             ");
@@ -61,6 +93,9 @@ public class CommandLineUI {
         System.out.println("================================================================================");
     }
 
+    /**
+     * Displays the main numbered menu options.
+     */
     private void printMainMenu() {
         System.out.println("\n----------------------------- MAIN NAVIGATION MENU -----------------------------");
         System.out.println("  [1] Calculate Dynamic Ride Fare (Interactive Input)");
@@ -71,15 +106,21 @@ public class CommandLineUI {
         System.out.println("--------------------------------------------------------------------------------");
     }
 
+    /**
+     * Handles interactive booking workflow: collects trip and market inputs,
+     * calls the pricing engine, and prints the itemized receipt.
+     */
     private void handleInteractiveBooking() {
         System.out.println("\n--- INTERACTIVE FARE CALCULATION ---");
 
         try {
+            // Collect physical journey parameters
             String pickup = promptString("Enter pickup location: ");
             String destination = promptString("Enter destination: ");
             double distance = promptDouble("Enter travel distance (in kilometers, e.g. 14.5): ");
             double duration = promptDouble("Enter estimated journey duration (in minutes, e.g. 25): ");
 
+            // Vehicle tier selection
             System.out.println("\nSelect Vehicle Type:");
             System.out.println("  1. Economy (Mini)   - Base: $2.50 | $0.90/km | $0.15/min");
             System.out.println("  2. Standard (Sedan) - Base: $3.50 | $1.25/km | $0.25/min");
@@ -87,11 +128,13 @@ public class CommandLineUI {
             int vehicleChoice = promptInt("Select vehicle (1-3, default 2): ", 2);
             VehicleType vehicleType = mapVehicleChoice(vehicleChoice);
 
+            // Collect market condition parameters
             System.out.println("\n--- Real-Time Market Conditions ---");
             int requests = promptInt("Enter current ride requests in zone: ", 10);
             int drivers = promptInt("Enter available drivers in zone: ", 10);
             boolean peak = promptBoolean("Is it currently peak hour? (y/n): ");
 
+            // Weather condition selection
             System.out.println("\nSelect Weather Condition:");
             System.out.println("  1. Clear / Normal (1.00x factor)");
             System.out.println("  2. Moderate Rain  (1.15x factor)");
@@ -100,19 +143,27 @@ public class CommandLineUI {
             int weatherChoice = promptInt("Select weather (1-4, default 1): ", 1);
             WeatherCondition weather = mapWeatherChoice(weatherChoice);
 
+            // Construct immutable domain models
             RideRequest request = new RideRequest(pickup, destination, distance, duration, vehicleType);
             MarketConditions conditions = new MarketConditions(requests, drivers, peak, weather);
 
+            // Calculate fare and display itemized breakdown
             FareBreakdown breakdown = engine.calculateFare(request, conditions);
             displayFareBreakdown(breakdown);
 
         } catch (IllegalArgumentException ex) {
+            // Defensive validation failure report
             System.out.println("\n[VALIDATION FAILED] " + ex.getMessage());
         } catch (Exception ex) {
+            // Unexpected error safeguard
             System.out.println("\n[UNEXPECTED ERROR] " + ex.getMessage());
         }
     }
 
+    /**
+     * Handles multi-tier vehicle comparison: evaluates Economy, Standard, and
+     * Premium tiers under the exact same journey and market conditions.
+     */
     private void handleTierComparison() {
         System.out.println("\n--- MULTI-TIER VEHICLE COMPARISON ---");
 
@@ -139,6 +190,7 @@ public class CommandLineUI {
                     "Vehicle Tier", "Normal Fare", "Surge", "Final Fare", "Difference");
             System.out.println("--------------------------------------------------------------------------------");
 
+            // Iterate across all vehicle categories
             for (VehicleType type : VehicleType.values()) {
                 RideRequest req = new RideRequest(pickup, destination, distance, duration, type);
                 FareBreakdown b = engine.calculateFare(req, conditions);
@@ -153,6 +205,10 @@ public class CommandLineUI {
         }
     }
 
+    /**
+     * Runs 6 predefined benchmark simulation scenarios demonstrating the engine's
+     * response across diverse market and weather conditions.
+     */
     private void handlePresetScenarios() {
         System.out.println("\n================================================================================");
         System.out.println("                     BENCHMARK SIMULATION SCENARIOS                             ");
@@ -164,37 +220,40 @@ public class CommandLineUI {
         double time = 24.0;
         VehicleType type = VehicleType.STANDARD;
 
-        // Scenario 1: Low Demand / Abundant Supply
+        // Scenario 1: Low Demand / Abundant Supply (Ratio 0.50 <= 1.0 => Multiplier 1.00x)
         runScenario("Scenario 1: Low Demand (Abundant Drivers)",
                 pickup, dest, dist, time, type,
                 new MarketConditions(15, 30, false, WeatherCondition.CLEAR));
 
-        // Scenario 2: Normal Balanced Market
+        // Scenario 2: Normal Balanced Market (Ratio 1.00 <= 1.0 => Multiplier 1.00x)
         runScenario("Scenario 2: Normal Balanced Market",
                 pickup, dest, dist, time, type,
                 new MarketConditions(25, 25, false, WeatherCondition.CLEAR));
 
-        // Scenario 3: Evening Peak Commute
+        // Scenario 3: Evening Peak Commute (Peak Factor Active => Multiplier 1.60x)
         runScenario("Scenario 3: Evening Peak Commute (Peak Factor Active)",
                 pickup, dest, dist, time, type,
                 new MarketConditions(60, 30, true, WeatherCondition.CLEAR));
 
-        // Scenario 4: Monsoon Downpour (Inclement Weather Surge)
+        // Scenario 4: Heavy Rain Downpour (Weather Factor 1.30x => Multiplier 1.72x)
         runScenario("Scenario 4: Heavy Rain Weather Surge",
                 pickup, dest, dist, time, type,
                 new MarketConditions(70, 35, false, WeatherCondition.HEAVY_RAIN));
 
-        // Scenario 5: Severe Friday Night Storm
+        // Scenario 5: Severe Storm + Peak Demand (High Imbalance => Multiplier 3.50x capped)
         runScenario("Scenario 5: Severe Storm + Peak Demand (High Imbalance)",
                 pickup, dest, dist, time, type,
                 new MarketConditions(90, 20, true, WeatherCondition.STORM));
 
-        // Scenario 6: Zero Available Drivers (Supply Exhaustion)
+        // Scenario 6: Zero Available Drivers (Total Supply Exhaustion => Multiplier 3.50x capped)
         runScenario("Scenario 6: Total Supply Exhaustion (Zero Drivers Available)",
                 pickup, dest, dist, time, type,
                 new MarketConditions(40, 0, false, WeatherCondition.CLEAR));
     }
 
+    /**
+     * Executes an individual scenario and prints its formatted output.
+     */
     private void runScenario(String title, String pickup, String dest, double dist, double time,
                             VehicleType type, MarketConditions conditions) {
         System.out.println("\n>>> " + title);
@@ -210,6 +269,9 @@ public class CommandLineUI {
         System.out.printf("    Notes: %s%n", b.getNotes());
     }
 
+    /**
+     * Displays platform rate cards, pricing formulas, and piecewise curve thresholds.
+     */
     private void displayAlgorithmAndRates() {
         System.out.println("\n================================================================================");
         System.out.println("                 RIDEFARE PRICING ALGORITHM & RATE CARDS                        ");
@@ -243,6 +305,11 @@ public class CommandLineUI {
         System.out.println("================================================================================\n");
     }
 
+    /**
+     * Renders a formatted, itemized ASCII receipt detailing every component of the fare.
+     *
+     * @param b Fully populated FareBreakdown record
+     */
     public void displayFareBreakdown(FareBreakdown b) {
         RideRequest req = b.getRequest();
         MarketConditions cond = b.getConditions();
@@ -288,11 +355,21 @@ public class CommandLineUI {
         System.out.println("================================================================================\n");
     }
 
+    // ------------------------------------------------------------------------
+    // CONSOLE INPUT HELPER METHODS WITH DEFENSIVE RE-PROMPT LOOPS
+    // ------------------------------------------------------------------------
+
+    /**
+     * Prompts for a non-empty string.
+     */
     private String promptString(String prompt) {
         System.out.print(prompt);
         return scanner.nextLine().trim();
     }
 
+    /**
+     * Prompts for a valid double; loops until valid input is received.
+     */
     private double promptDouble(String prompt) {
         while (true) {
             System.out.print(prompt);
@@ -305,6 +382,9 @@ public class CommandLineUI {
         }
     }
 
+    /**
+     * Prompts for a valid integer; returns default if input is empty.
+     */
     private int promptInt(String prompt, int defaultValue) {
         while (true) {
             System.out.print(prompt);
@@ -320,12 +400,18 @@ public class CommandLineUI {
         }
     }
 
+    /**
+     * Prompts for a boolean (y/n, true/false, 1/0).
+     */
     private boolean promptBoolean(String prompt) {
         System.out.print(prompt);
         String input = scanner.nextLine().trim().toLowerCase();
         return input.startsWith("y") || input.equals("true") || input.equals("1");
     }
 
+    /**
+     * Maps menu selection integer to VehicleType enum constant.
+     */
     private VehicleType mapVehicleChoice(int choice) {
         switch (choice) {
             case 1:
@@ -338,6 +424,9 @@ public class CommandLineUI {
         }
     }
 
+    /**
+     * Maps menu selection integer to WeatherCondition enum constant.
+     */
     private WeatherCondition mapWeatherChoice(int choice) {
         switch (choice) {
             case 2:
